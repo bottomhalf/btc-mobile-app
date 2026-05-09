@@ -20,7 +20,7 @@ class LoginFeatureChips extends StatelessWidget {
     ];
 
     return SizedBox(
-      height: 42,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -33,7 +33,7 @@ class LoginFeatureChips extends StatelessWidget {
 
   Widget _buildChip(_Feature f) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         color: f.color.withValues(alpha: 0.12),

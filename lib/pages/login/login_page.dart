@@ -41,21 +41,21 @@ class LoginPage extends GetView<LoginController> {
                       MediaQuery.of(context).padding.bottom,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 16),
                       const LoginHeader(),
-                      const SizedBox(height: 32),
+                      const SizedBox(height: 16),
                       const LoginFeatureChips(),
-                      const SizedBox(height: 36),
+                      const SizedBox(height: 18),
                       const LoginFormCard(),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 14),
                       _buildFooter(),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       _buildBottomInfo(),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 12),
                     ],
                   ),
                 ),
@@ -168,7 +168,7 @@ class LoginPage extends GetView<LoginController> {
           color: Colors.white.withValues(alpha: 0.08),
           thickness: 1,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

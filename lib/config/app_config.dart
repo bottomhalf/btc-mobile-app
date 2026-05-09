@@ -68,7 +68,7 @@ class AppConfig {
       debugPrint('│ port            : ${_instance!.port}');
       debugPrint('│ connectionTimeout: ${_instance!.connectionTimeout}s');
       debugPrint(
-        '│ socketHandshakEndpoint: ${_instance!.socketHandshakEndpoint}',
+        '│ socketHandshakeEndpoint: ${_instance!.socketHandshakEndpoint}',
       );
       debugPrint('└────────────────────────────────────');
     }

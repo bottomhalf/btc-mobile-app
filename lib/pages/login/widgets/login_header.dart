@@ -16,32 +16,32 @@ class LoginHeader extends StatelessWidget {
         children: [
           // ── App Logo from asset ──
           Container(
-            width: 68,
-            height: 68,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
                   color: _neonPurple.withValues(alpha: 0.4),
-                  blurRadius: 28,
-                  offset: const Offset(0, 10),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
                 ),
                 BoxShadow(
                   color: _richIndigo.withValues(alpha: 0.25),
-                  blurRadius: 40,
-                  spreadRadius: 2,
+                  blurRadius: 30,
+                  spreadRadius: 1,
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Image.asset(
                 'assets/images/logo.png',
                 fit: BoxFit.contain,
               ),
             ),
           ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 14),
 
           // ── App Title ──
           ShaderMask(
@@ -51,7 +51,7 @@ class LoginHeader extends StatelessWidget {
             child: const Text(
               'Conference AI',
               style: TextStyle(
-                fontSize: 36,
+                fontSize: 28,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 letterSpacing: -0.5,
@@ -60,15 +60,15 @@ class LoginHeader extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
 
           // ── Subtitle with AI context ──
           Text(
             'AI-powered meetings with crisp audio,\nHD video & smart transcription',
             style: TextStyle(
-              fontSize: 15,
+              fontSize: 13,
               color: Colors.white.withValues(alpha: 0.55),
-              height: 1.6,
+              height: 1.5,
               letterSpacing: 0.2,
             ),
             textAlign: TextAlign.center,

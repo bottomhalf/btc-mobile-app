@@ -13,13 +13,13 @@ class LoginFormCard extends GetView<LoginController> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -40,11 +40,11 @@ class LoginFormCard extends GetView<LoginController> {
               children: [
                 // ── Email ──
                 _buildLabel('Email Address', Icons.alternate_email_rounded),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 TextFormField(
                   controller: controller.emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
                   cursorColor: _electricBlue,
                   decoration: _inputDecoration(
                     hint: 'you@company.com',
@@ -56,16 +56,16 @@ class LoginFormCard extends GetView<LoginController> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 14),
 
                 // ── Password ──
                 _buildLabel('Password', Icons.lock_outline_rounded),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 Obx(
                   () => TextFormField(
                     controller: controller.passwordCtrl,
                     obscureText: controller.obscurePassword.value,
-                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
                     cursorColor: _electricBlue,
                     decoration: _inputDecoration(
                       hint: '••••••••',
@@ -89,7 +89,7 @@ class LoginFormCard extends GetView<LoginController> {
                     },
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 8),
 
                 // ── Forgot password ──
                 Align(
@@ -111,12 +111,12 @@ class LoginFormCard extends GetView<LoginController> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 16),
 
                 // ── Sign-in button ──
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: 48,
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
@@ -176,43 +176,7 @@ class LoginFormCard extends GetView<LoginController> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
 
-                // ── Divider with "or" ──
-                Row(
-                  children: [
-                    Expanded(
-                      child: Divider(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'or continue with',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.35),
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Divider(
-                        color: Colors.white.withValues(alpha: 0.1),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // ── Social login row ──
-                Row(
-                  children: [
-                    Expanded(child: _socialButton(Icons.g_mobiledata_rounded, 'Google')),
-                    const SizedBox(width: 12),
-                    Expanded(child: _socialButton(Icons.business_rounded, 'SSO')),
-                  ],
-                ),
               ],
             ),
           ),
@@ -252,7 +216,7 @@ class LoginFormCard extends GetView<LoginController> {
       prefixIcon: Icon(icon, size: 20, color: Colors.white.withValues(alpha: 0.35)),
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.07),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
@@ -287,7 +251,7 @@ class LoginFormCard extends GetView<LoginController> {
       onTap: () {},
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        height: 50,
+        height: 42,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           border: Border.all(

@@ -9,7 +9,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: _buildAppBar(context),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -27,17 +26,6 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: Text(
-        'Settings',
-        style: Theme.of(context).textTheme.headlineMedium,
-      ),
-      backgroundColor: Colors.transparent,
-      elevation: 0,
     );
   }
 
@@ -110,7 +98,7 @@ class SettingsPage extends StatelessWidget {
                   () => Switch.adaptive(
                     value: themeService.isDarkMode,
                     onChanged: (val) => themeService.toggleTheme(),
-                    activeColor: AppTheme.accentPurple,
+                    activeTrackColor: AppTheme.accentPurple,
                   ),
                 ),
               ],
@@ -136,7 +124,7 @@ class SettingsPage extends StatelessWidget {
             context,
             icon: Icons.person_outline_rounded,
             title: 'Profile',
-            onTap: () {},
+            onTap: () => Get.toNamed('/profile'),
           ),
           Divider(
             color: AppTheme.divider(context).withValues(alpha: 0.5),

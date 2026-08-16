@@ -1,25 +1,31 @@
+import 'package:conference/models/conversation.dart';
+import 'package:conference/models/user_model.dart';
 import 'package:conference/services/http_service.dart';
+import 'package:conference/services/meeting_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../models/meeting_model.dart';
 import '../../models/chat_message_model.dart';
 
 class ChatDetailController extends GetxController {
-  late final MeetingModel conversation;
+  late final Conversation conversation;
 
-  ChatDetailController({MeetingModel? conversation}) {
-    this.conversation = conversation ?? Get.arguments as MeetingModel;
+  ChatDetailController({Conversation? conversation}) {
+    this.conversation = conversation ?? Get.arguments as Conversation;
   }
 
   final RxList<ChatMessage> messages = <ChatMessage>[].obs;
   final RxBool isLoading = true.obs;
   final RxBool isLoadingMore = false.obs;
+  final RxBool isJoining = false.obs;
   final TextEditingController messageController = TextEditingController();
   final ScrollController scrollController = ScrollController();
   final _http = HttpService.instance;
+  final _user = UserModel.instance;
 
   int _currentPage = 1;
   bool _hasMore = true;
+
+  bool get hasMore => _hasMore;
 
   @override
   void onInit() {
@@ -48,13 +54,13 @@ class ChatDetailController extends GetxController {
     _hasMore = true;
     try {
       final response = await _http.get(
-        'messages/get?id=${conversation.id}&page=$_currentPage&limit=20',
+        'messages/get?id=${conversation.conversationId}&page=$_currentPage&limit=20',
       );
 
       if (response.responseBody != null) {
         final data = response.responseBody;
         if (data != null) {
-          final chatResponse = ChatMessageResponse.fromJson(data);
+          final chatResponse = ChatMessageResponse.fromJson(data['searchResult']);
           messages.value = chatResponse.messages;
           _hasMore = chatResponse.hasMore;
           _currentPage++;
@@ -73,7 +79,7 @@ class ChatDetailController extends GetxController {
     isLoadingMore.value = true;
     try {
       final response = await _http.get(
-        'messages/get?id=${conversation.id}&page=$_currentPage&limit=20',
+        'messages/get?id=${conversation.conversationId}&page=$_currentPage&limit=20',
       );
 
       if (response.responseBody != null &&
@@ -93,6 +99,30 @@ class ChatDetailController extends GetxController {
     }
   }
 
+  /// Open a recent meeting → triggers the PiP overlay.
+  Future<void> joinMeeting() async {
+    isJoining.value = true;
+    try {
+      await MeetingService.instance.joinMeeting(
+        roomId: conversation.conversationId,
+        participantName: _user.fullName,
+        meetingTitle: conversation.title,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Connection Failed',
+        'Failed to join: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFFF6B6B),
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+      );
+    } finally {
+      isJoining.value = false;
+    }
+  }
+
   void sendMessage() {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
@@ -100,7 +130,7 @@ class ChatDetailController extends GetxController {
     final newMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       messageId: DateTime.now().millisecondsSinceEpoch.toString(),
-      conversationId: conversation.id,
+      conversationId: conversation.conversationId,
       senderId: 'currentUser', // In a real app, get from Auth service
       type: 'text',
       body: text,

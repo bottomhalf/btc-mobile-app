@@ -13,7 +13,6 @@ class CalendarPage extends GetView<CalendarController> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildHeader(context),
             Expanded(
               child: Obx(() {
                 if (controller.isLoading.value) {
@@ -56,7 +55,7 @@ class CalendarPage extends GetView<CalendarController> {
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton.icon(
-                        onPressed: () {},
+                        onPressed: () => Get.toNamed('/meet-calendar'),
                         icon: const Icon(Icons.add_rounded),
                         label: const Text('Schedule Meeting'),
                         style: ElevatedButton.styleFrom(
@@ -82,44 +81,5 @@ class CalendarPage extends GetView<CalendarController> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.divider(context).withValues(alpha: 0.5),
-            width: 1,
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            'Calendar',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textPrimary(context),
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            icon: Icon(
-              Icons.today_rounded,
-              color: AppTheme.textSecondary(context),
-            ),
-            onPressed: () {},
-            tooltip: 'Today',
-          ),
-          IconButton(
-            icon: Icon(Icons.add_rounded, color: AppTheme.accentPurple),
-            onPressed: () {},
-            tooltip: 'New Event',
-          ),
-        ],
-      ),
-    );
-  }
+
 }

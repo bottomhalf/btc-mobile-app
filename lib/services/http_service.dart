@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:conference/core/storage/secure_storage_service.dart';
+import 'package:conference/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
@@ -48,6 +49,17 @@ class HttpService {
   Future<void> setTokenDetail(ApiResponse apiResponse) async {
     setAuthToken(apiResponse.accessToken!);
     setRefreshToken(apiResponse.refreshToken!);
+  }
+
+  /// Update & Store the user detail — saves to memory.
+  Future<void> updateUserDetail(ApiResponse apiResponse) async {
+    var user = UserModel.instance;
+    user.userId = apiResponse.responseBody["userId"];
+    user.email = apiResponse.responseBody["email"];
+    user.firstName = apiResponse.responseBody["firstName"];
+    user.lastName = apiResponse.responseBody["lastName"];
+    user.code = apiResponse.responseBody["code"] ?? "";
+    user.imageUrl = apiResponse.responseBody["imageUrl"] ?? "";
   }
 
   /// Clear the auth token (on logout).
@@ -191,6 +203,7 @@ class HttpService {
 
         validateTokens(apiResponse);
         await setTokenDetail(apiResponse);
+        await updateUserDetail(apiResponse);
 
         // Success — exit the retry loop
         return;

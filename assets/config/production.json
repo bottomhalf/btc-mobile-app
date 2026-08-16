@@ -1,10 +1,12 @@
 {
     "env": "production",
     "apiBaseUrl": "https://www.confeet.com/api/",
-    "wsBaseUrl": "wss://www.confeet.com/cf/meet",
+    "wsBaseUrl": "wss://www.confeet.com/v1/cfgs/cf-sesion",
     "livekitUrl": "www.confeet.com",
     "port": 443,
     "connectionTimeout": 15,
     "enableLogs": true,
-    "socketHandshakEndpoint": "ws"
+    "socketHandshakEndpoint": "wss",
+    "heartbeatInterval": 30000,
+    "imageBaseUrl": "https://rs.confeet.com/"
 }

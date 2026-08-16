@@ -1,9 +1,11 @@
+import 'package:conference/models/conversation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../models/meeting_model.dart';
 import '../../../models/chat_message_model.dart';
 import '../../../models/user_model.dart';
 import '../../../theme/app_theme.dart';
+import '../../../services/meeting_service.dart';
 import '../team_controller.dart';
 import '../chat_detail_controller.dart';
 
@@ -44,7 +46,7 @@ class DesktopTeamPage extends GetView<TeamController> {
                 return _buildEmptyState(context);
               }
               return _DesktopChatDetail(
-                key: ValueKey(controller.selectedConversation.value!.id),
+                key: ValueKey(controller.selectedConversation.value!.conversationId),
                 conversation: controller.selectedConversation.value!,
               );
             }),
@@ -212,7 +214,7 @@ class _ConversationListPanel extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     TextButton.icon(
-                      onPressed: controller.fetchConversations,
+                      onPressed: controller.initConnection,
                       icon: const Icon(Icons.refresh_rounded, size: 16),
                       label: const Text('Retry'),
                     ),
@@ -273,7 +275,7 @@ class _ConversationListPanel extends StatelessWidget {
                           itemCount: members.length,
                           itemBuilder: (context, index) {
                             return _DesktopConvoTile(
-                              convo: members[index],
+                              c: members[index],
                               controller: controller,
                             );
                           },
@@ -316,7 +318,7 @@ class _ConversationListPanel extends StatelessWidget {
                           itemCount: groups.length,
                           itemBuilder: (context, index) {
                             return _DesktopConvoTile(
-                              convo: groups[index],
+                              c: groups[index],
                               controller: controller,
                             );
                           },
@@ -337,18 +339,18 @@ class _ConversationListPanel extends StatelessWidget {
 /// ── Single conversation tile for desktop ──
 class _DesktopConvoTile extends StatelessWidget {
   const _DesktopConvoTile({
-    required this.convo,
+    required this.c,
     required this.controller,
   });
 
-  final MeetingModel convo;
+  final Conversation c;
   final TeamController controller;
 
   @override
   Widget build(BuildContext context) {
-    final isGroup = convo.conversationType == 'group';
+    final isGroup = c.type == 'group';
 
-    String title = convo.conversationName;
+    String title = c.type;
     if (title.isEmpty) {
       title = isGroup ? 'Group Chat' : 'Direct Message';
     }
@@ -370,17 +372,17 @@ class _DesktopConvoTile extends StatelessWidget {
       const [Color(0xFF00B894), Color(0xFF55EFC4)],
       const [Color(0xFFE17055), Color(0xFFF8A5C2)],
     ];
-    final colorPair = gradients[convo.id.hashCode.abs() % gradients.length];
+    final colorPair = gradients[c.conversationId.hashCode.abs() % gradients.length];
 
     return Obx(() {
-      final isSelected = controller.selectedConversation.value?.id == convo.id;
+      final isSelected = controller.selectedConversation.value?.conversationId == c.conversationId;
 
       return MouseRegion(
         cursor: SystemMouseCursors.click,
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => controller.selectConversation(convo),
+            onTap: () => controller.selectConversation(c),
             borderRadius: BorderRadius.circular(10),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
@@ -441,7 +443,7 @@ class _DesktopConvoTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              convo.timeAgo,
+                              c.timeAgo,
                               style: TextStyle(
                                 fontSize: 11,
                                 color: AppTheme.textSecondary(context),
@@ -451,7 +453,7 @@ class _DesktopConvoTile extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          convo.lastMessage?.content ??
+                          c.lastMessage ??
                               (isGroup
                                   ? 'You were added to the group'
                                   : 'Start of conversation'),
@@ -486,7 +488,7 @@ class _DesktopChatDetail extends StatefulWidget {
     required this.conversation,
   });
 
-  final MeetingModel conversation;
+  final Conversation conversation;
 
   @override
   State<_DesktopChatDetail> createState() => _DesktopChatDetailState();
@@ -501,13 +503,13 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
     // Register a controller for this specific conversation
     _chatController = Get.put(
       ChatDetailController(conversation: widget.conversation),
-      tag: widget.conversation.id,
+      tag: widget.conversation.conversationId,
     );
   }
 
   @override
   void dispose() {
-    Get.delete<ChatDetailController>(tag: widget.conversation.id);
+    Get.delete<ChatDetailController>(tag: widget.conversation.conversationId);
     super.dispose();
   }
 
@@ -581,13 +583,13 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
     );
   }
 
-  Widget _buildChatHeader(BuildContext context, MeetingModel convo) {
+  Widget _buildChatHeader(BuildContext context, Conversation c) {
     final gradients = [
       const [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
       const [Color(0xFF2D7FF9), Color(0xFF18BFFF)],
       const [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
     ];
-    final colorPair = gradients[convo.id.hashCode.abs() % gradients.length];
+    final colorPair = gradients[c.conversationId.hashCode.abs() % gradients.length];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -611,8 +613,8 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
             ),
             child: Center(
               child: Text(
-                convo.conversationName.isNotEmpty
-                    ? convo.conversationName[0].toUpperCase()
+                c.title.isNotEmpty
+                    ? c.title[0].toUpperCase()
                     : '?',
                 style: const TextStyle(
                   color: Colors.white,
@@ -628,8 +630,8 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  convo.conversationName.isNotEmpty
-                      ? convo.conversationName
+                  c.title.isNotEmpty
+                      ? c.title
                       : 'Chat',
                   style: TextStyle(
                     color: AppTheme.textPrimary(context),
@@ -638,7 +640,7 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
                   ),
                 ),
                 Text(
-                  '${convo.participantCount} participants',
+                  '${c.memberCount} participants',
                   style: TextStyle(
                     color: AppTheme.textSecondary(context),
                     fontSize: 12,
@@ -651,7 +653,13 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
             cursor: SystemMouseCursors.click,
             child: IconButton(
               icon: Icon(Icons.videocam_rounded, color: AppTheme.accentPurple),
-              onPressed: () {},
+              onPressed: () {
+                MeetingService.instance.joinMeeting(
+                  roomId: c.conversationId,
+                  participantName: UserModel.instance.fullName,
+                  meetingTitle: c.title,
+                );
+              },
               tooltip: 'Start video call',
             ),
           ),

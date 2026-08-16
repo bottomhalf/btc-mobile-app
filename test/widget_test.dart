@@ -1,30 +1,61 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get/get.dart';
+import 'package:hive/hive.dart';
+import 'package:conference/core/storage/storage.dart';
+import 'package:conference/theme/theme_service.dart';
 
-import 'package:conference/main.dart';
+import 'package:flutter/services.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late Directory tempDir;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUp(() async {
+    // Initialize Hive in a temporary directory for unit testing
+    tempDir = Directory.systemTemp.createTempSync();
+    
+    // Mock the path_provider channel
+    const MethodChannel channel = MethodChannel('plugins.flutter.io/path_provider');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+      return tempDir.path;
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await StorageService.instance.initialize();
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  tearDown(() async {
+    await Hive.close();
+    if (tempDir.existsSync()) {
+      tempDir.deleteSync(recursive: true);
+    }
+    Get.reset();
+  });
+
+  test('ThemeService changes theme and saves to storage', () async {
+    final themeService = Get.put(ThemeService());
+    
+    // Check default theme is light
+    expect(themeService.themeMode, ThemeMode.light);
+    expect(themeService.isDarkMode, false);
+
+    // Toggle theme to dark
+    themeService.toggleTheme();
+    expect(themeService.themeMode, ThemeMode.dark);
+    expect(themeService.isDarkMode, true);
+
+    // Check it saved to storage
+    final saved = StorageService.instance.getValue<String>('theme_mode');
+    expect(saved, 'dark');
+
+    // Toggle theme back to light
+    themeService.toggleTheme();
+    expect(themeService.themeMode, ThemeMode.light);
+    expect(themeService.isDarkMode, false);
+    
+    final savedLight = StorageService.instance.getValue<String>('theme_mode');
+    expect(savedLight, 'light');
   });
 }

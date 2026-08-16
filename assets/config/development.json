@@ -6,5 +6,6 @@
     "port": 443,
     "connectionTimeout": 15,
     "enableLogs": true,
-    "socketHandshakEndpoint": "ws"
+    "socketHandshakEndpoint": "ws",
+    "imageBaseUrl": "https://rs.confeet.com/"
 }

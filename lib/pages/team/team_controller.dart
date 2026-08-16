@@ -1,60 +1,34 @@
-import 'package:flutter/material.dart';
+import 'package:conference/models/conversation.dart';
 import 'package:get/get.dart';
-import '../../models/api_exception.dart';
-import '../../models/meeting_model.dart';
-import '../../services/http_service.dart';
+import 'service/chat_service.dart';
 
 class TeamController extends GetxController {
-  final _http = HttpService.instance;
-
-  final RxBool isLoading = true.obs;
-  final RxString errorMessage = ''.obs;
-  final RxList<MeetingModel> conversations = <MeetingModel>[].obs;
-
   /// Currently selected conversation for desktop master-detail view.
-  final Rx<MeetingModel?> selectedConversation = Rx<MeetingModel?>(null);
+  final Rx<Conversation?> selectedConversation = Rx<Conversation?>(null);
+
+  // Getters delegating state to global ChatService
+  RxBool get isLoading => ChatService.instance.isLoading;
+  RxString get errorMessage => ChatService.instance.errorMessage;
+  RxList<Conversation> get conversations => ChatService.instance.conversations;
 
   @override
   void onInit() {
     super.onInit();
-    fetchConversations();
+    initConnection();
   }
 
-  Future<void> fetchConversations() async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
-    try {
-      final responseMap = await _http.get(
-        'conversations/rooms?pageNumber=1&pageSize=20',
-      );
-
-      if (responseMap.responseBody != null &&
-          responseMap.responseBody['data'] != null) {
-        final List<dynamic> data = responseMap.responseBody['data'];
-        conversations.value = data
-            .map((e) => MeetingModel.fromJson(e as Map<String, dynamic>))
-            .toList();
-      } else {
-        errorMessage.value = 'Failed to load conversations data format.';
-      }
-    } on ApiException catch (e) {
-      errorMessage.value = e.message;
-    } catch (e) {
-      errorMessage.value = 'An unexpected error occurred.';
-      debugPrint('Error fetching conversations: $e');
-    } finally {
-      isLoading.value = false;
-    }
+  /// Delegated trigger to reconnect/initiate connection in ChatService.
+  void initConnection() {
+    ChatService.instance.initConnection();
   }
 
   /// Opens a conversation in a new route (used on mobile).
-  void openTeam(MeetingModel meeting) {
+  void openTeam(Conversation meeting) {
     Get.toNamed('/chat-detail', arguments: meeting);
   }
 
   /// Selects a conversation inline (used on desktop master-detail).
-  void selectConversation(MeetingModel meeting) {
+  void selectConversation(Conversation meeting) {
     selectedConversation.value = meeting;
   }
 }

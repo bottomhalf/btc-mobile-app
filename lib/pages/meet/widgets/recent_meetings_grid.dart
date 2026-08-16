@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../models/meeting_model.dart';
+import '../../../models/quick_meetings.dart';
 import '../../../theme/app_theme.dart';
 import '../meet_controller.dart';
 
@@ -60,7 +60,7 @@ class RecentMeetingsGrid extends GetView<MeetController> {
       }
 
       // Empty state
-      if (controller.recentMeetings.isEmpty) {
+      if (controller.quickMeetings.isEmpty) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 32),
           child: Center(
@@ -86,7 +86,7 @@ class RecentMeetingsGrid extends GetView<MeetController> {
       }
 
       // Meeting cards — grid of 2 columns
-      final meetings = controller.recentMeetings;
+      final meetings = controller.quickMeetings;
       return GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -105,7 +105,7 @@ class RecentMeetingsGrid extends GetView<MeetController> {
 }
 
 class _MeetingCard extends StatelessWidget {
-  final MeetingModel meeting;
+  final QuickMeetings meeting;
 
   const _MeetingCard({required this.meeting});
 
@@ -113,7 +113,6 @@ class _MeetingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<MeetController>();
 
-    // Pick a unique gradient per card based on index
     final gradients = [
       const [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
       const [Color(0xFF2D7FF9), Color(0xFF18BFFF)],
@@ -122,7 +121,7 @@ class _MeetingCard extends StatelessWidget {
       const [Color(0xFFE17055), Color(0xFFF8A5C2)],
       const [Color(0xFFA29BFE), Color(0xFF6C5CE7)],
     ];
-    final colorPair = gradients[meeting.id.hashCode.abs() % gradients.length];
+    final colorPair = gradients[meeting.meetingId.hashCode.abs() % gradients.length];
 
     return GestureDetector(
       onTap: () => controller.openMeeting(meeting),
@@ -147,109 +146,107 @@ class _MeetingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Icon badge ──
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: colorPair),
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                  child: Icon(
-                    meeting.conversationType == 'group'
-                        ? Icons.groups_rounded
-                        : Icons.person_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: colorPair),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.videocam_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    if (meeting.meetingPassword.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentPurple.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: AppTheme.accentPurple.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.key_rounded,
+                              size: 10,
+                              color: AppTheme.accentPurple,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              meeting.meetingPassword,
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.accentPurple,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
 
-                // ── Meeting name ──
                 Text(
-                  meeting.conversationName,
+                  meeting.title.isNotEmpty ? meeting.title : 'Quick Meeting',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: 13,
                     color: AppTheme.textPrimary(context),
                     height: 1.3,
                   ),
                 ),
+                const SizedBox(height: 6),
+
+                Text(
+                  'By: ${meeting.organizerName}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textSecondary(context),
+                  ),
+                ),
                 const Spacer(),
 
-                // ── Last message preview ──
-                if (meeting.lastMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Text(
-                      meeting.lastMessage!.content,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textSecondary(context),
-                      ),
-                    ),
-                  ),
-
-                // ── Footer: participants + time ──
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Participant avatars stack
-                    SizedBox(
-                      width: _avatarStackWidth(meeting.participantCount),
-                      height: 22,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: List.generate(
-                          meeting.participantCount.clamp(0, 3),
-                          (i) => Positioned(
-                            left: i * 14.0,
-                            child: Container(
-                              width: 22,
-                              height: 22,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(colors: colorPair),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppTheme.surface(context),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  meeting.participants[i].initials,
-                                  style: TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.textPrimary(context),
-                                  ),
-                                ),
-                              ),
-                            ),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 12,
+                          color: AppTheme.textSecondary(context),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDuration(meeting.durationInSecond),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.textSecondary(context),
                           ),
                         ),
-                      ),
+                      ],
                     ),
-                    if (meeting.participantCount > 3) ...[
-                      const SizedBox(width: 4),
-                      Text(
-                        '+${meeting.participantCount - 3}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppTheme.textSecondary(context),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                    const Spacer(),
                     Text(
-                      meeting.timeAgo,
+                      _formatDate(meeting.startDate),
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10,
                         color: AppTheme.textSecondary(context),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -262,9 +259,22 @@ class _MeetingCard extends StatelessWidget {
     );
   }
 
-  double _avatarStackWidth(int count) {
-    final shown = count.clamp(0, 3);
-    if (shown == 0) return 0;
-    return 22.0 + (shown - 1) * 14.0;
+  String _formatDuration(int seconds) {
+    if (seconds <= 0) return '0m';
+    final duration = Duration(seconds: seconds);
+    if (duration.inHours > 0) {
+      final minutes = duration.inMinutes % 60;
+      return minutes > 0 ? '${duration.inHours}h ${minutes}m' : '${duration.inHours}h';
+    }
+    return '${duration.inMinutes}m';
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${date.day} ${months[date.month - 1]}';
   }
 }

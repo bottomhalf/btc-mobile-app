@@ -93,7 +93,7 @@ class DesktopChatDetailPage extends GetView<ChatDetailController> {
       const [Color(0xFF2D7FF9), Color(0xFF18BFFF)],
       const [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
     ];
-    final colorPair = gradients[convo.id.hashCode.abs() % gradients.length];
+    final colorPair = gradients[convo.conversationId.hashCode.abs() % gradients.length];
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -130,8 +130,8 @@ class DesktopChatDetailPage extends GetView<ChatDetailController> {
             ),
             child: Center(
               child: Text(
-                convo.conversationName.isNotEmpty
-                    ? convo.conversationName[0].toUpperCase()
+                convo.title.isNotEmpty
+                    ? convo.title[0].toUpperCase()
                     : '?',
                 style: const TextStyle(
                   color: Colors.white,
@@ -147,8 +147,8 @@ class DesktopChatDetailPage extends GetView<ChatDetailController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  convo.conversationName.isNotEmpty
-                      ? convo.conversationName
+                  convo.title.isNotEmpty
+                      ? convo.title
                       : 'Chat',
                   style: TextStyle(
                     color: AppTheme.textPrimary(context),
@@ -157,7 +157,7 @@ class DesktopChatDetailPage extends GetView<ChatDetailController> {
                   ),
                 ),
                 Text(
-                  '${convo.participantCount} participants',
+                  '${convo.memberCount} participants',
                   style: TextStyle(
                     color: AppTheme.textSecondary(context),
                     fontSize: 12,
@@ -171,7 +171,7 @@ class DesktopChatDetailPage extends GetView<ChatDetailController> {
             child: IconButton(
               icon: Icon(Icons.videocam_rounded,
                   color: AppTheme.accentPurple),
-              onPressed: () {},
+              onPressed: () => controller.joinMeeting(),
               tooltip: 'Start video call',
             ),
           ),

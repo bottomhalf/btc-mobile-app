@@ -30,6 +30,8 @@ class AppConfig {
   final int connectionTimeout;
   final bool enableLogs;
   final String socketHandshakEndpoint;
+  final String defaultUserImage;
+  final String imageBaseUrl;
 
   AppConfig._({
     required this.env,
@@ -40,6 +42,8 @@ class AppConfig {
     required this.connectionTimeout,
     required this.enableLogs,
     required this.socketHandshakEndpoint,
+    required this.imageBaseUrl,
+    this.defaultUserImage = "assets/images/user.jpg",
   });
 
   // ─── Initializer ───────────────────────────────────────────────
@@ -57,6 +61,7 @@ class AppConfig {
       connectionTimeout: json['connectionTimeout'] as int,
       enableLogs: json['enableLogs'] as bool,
       socketHandshakEndpoint: json['socketHandshakEndpoint'] as String,
+      imageBaseUrl: json['imageBaseUrl'] as String,
     );
 
     if (_instance!.enableLogs) {
@@ -67,9 +72,8 @@ class AppConfig {
       debugPrint('│ livekitUrl      : ${_instance!.livekitUrl}');
       debugPrint('│ port            : ${_instance!.port}');
       debugPrint('│ connectionTimeout: ${_instance!.connectionTimeout}s');
-      debugPrint(
-        '│ socketHandshakeEndpoint: ${_instance!.socketHandshakEndpoint}',
-      );
+      debugPrint('│ socketHandshakeEndpoint: ${_instance!.socketHandshakEndpoint}');
+      debugPrint('│ imageBaseUrl: ${_instance!.imageBaseUrl}');
       debugPrint('└────────────────────────────────────');
     }
   }
@@ -82,4 +86,33 @@ class AppConfig {
 
   /// Whether we are running in the production environment.
   bool get isProduction => env == 'production';
+
+  /// Get application default user icons image
+  String get getDefaultUserImage => defaultUserImage;
+
+  /// Build image default image url
+  String? getImage(String url) {
+    if (url.isEmpty) {
+      return null;
+    }
+
+    return imageBaseUrl + url;
+  }
+
+  InputDecoration getTextFieldDecoration({
+    required String placeholder,
+    Widget? leadingIcon,
+    Widget? trailingIcon,
+  }) {
+    final borderSide = BorderSide(color: Colors.grey.shade400);
+    return InputDecoration(
+      prefixIcon: leadingIcon,
+      suffixIcon: trailingIcon,
+      border: UnderlineInputBorder(borderSide: borderSide),
+      focusedBorder: UnderlineInputBorder(borderSide: borderSide),
+      enabledBorder: UnderlineInputBorder(borderSide: borderSide),
+      labelText: placeholder,
+      labelStyle: const TextStyle(color: Colors.grey),
+    );
+  }
 }

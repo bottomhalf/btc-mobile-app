@@ -1,5 +1,5 @@
 import 'package:conference/models/api_response.dart';
-import 'package:conference/models/meeting_model.dart';
+import 'package:conference/models/quick_meetings.dart';
 import 'package:conference/models/user_model.dart';
 import 'package:conference/services/http_service.dart';
 import 'package:conference/services/meeting_service.dart';
@@ -17,7 +17,7 @@ class MeetController extends GetxController {
   final isJoining = false.obs;
 
   // ─── Recent Meetings ────────────────────────────────────────────
-  final recentMeetings = <MeetingModel>[].obs;
+  final quickMeetings = <QuickMeetings>[].obs;
   final isLoadingMeetings = true.obs;
   final meetingsError = Rxn<String>();
 
@@ -26,16 +26,16 @@ class MeetController extends GetxController {
     meetingsError.value = null;
 
     try {
-      ApiResponse response = await http.get('meeting/get-recent-meetings');
+      ApiResponse response = await http.get('meeting/getAllMeetingByOrganizer');
 
       if (response.responseBody != null) {
         final body = response.responseBody as Map<String, dynamic>;
-        final data = body['data'] as List<dynamic>? ?? [];
+        final data = body['QuickMeetings'] as List<dynamic>? ?? [];
         final meetings = data
-            .map((e) => MeetingModel.fromJson(e as Map<String, dynamic>))
+            .map((e) => QuickMeetings.fromJson(e as Map<String, dynamic>))
             .take(6)
             .toList();
-        recentMeetings.value = meetings;
+        quickMeetings.value = meetings;
       }
     } catch (e) {
       debugPrint('Failed to load recent meetings: $e');
@@ -46,17 +46,13 @@ class MeetController extends GetxController {
   }
 
   /// Open a recent meeting → triggers the PiP overlay.
-  void openMeeting(MeetingModel meeting) {
+  void openMeeting(QuickMeetings meeting) {
     isJoining.value = true;
-    MeetingParticipant user = meeting.participants
-        .where((x) => x.userId == _user.userId)
-        .first;
-
     try {
       MeetingService.instance.joinMeeting(
-        roomId: meeting.id,
-        participantName: user.fullName,
-        meetingTitle: meeting.conversationName,
+        roomId: meeting.meetingId,
+        participantName: _user.fullName,
+        meetingTitle: meeting.title,
       );
     } catch (e) {
       Get.snackbar(

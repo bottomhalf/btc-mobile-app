@@ -1,4 +1,5 @@
 import 'package:conference/models/conversation.dart';
+import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../models/meeting_model.dart';
@@ -8,6 +9,7 @@ import '../../../theme/app_theme.dart';
 import '../../../services/meeting_service.dart';
 import '../team_controller.dart';
 import '../chat_detail_controller.dart';
+import '../service/chat_service.dart';
 
 /// Desktop-optimised team page.
 ///
@@ -422,50 +424,87 @@ class _DesktopConvoTile extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                title,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w700
-                                      : FontWeight.w600,
-                                  color: AppTheme.textPrimary(context),
+                    child: Obx(() {
+                      final unreadCount = ChatService.instance.unreadCounts[c.conversationId] ?? 0;
+                      final hasUnread = unreadCount > 0;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: hasUnread
+                                        ? FontWeight.w800
+                                        : (isSelected ? FontWeight.w700 : FontWeight.w600),
+                                    color: AppTheme.textPrimary(context),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              c.timeAgo,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: AppTheme.textSecondary(context),
+                              const SizedBox(width: 4),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    c.timeAgo,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                                      color: hasUnread
+                                          ? AppTheme.accentPurple
+                                          : AppTheme.textSecondary(context),
+                                    ),
+                                  ),
+                                  if (hasUnread) ...[
+                                    const SizedBox(height: 2),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentPurple,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        '$unreadCount',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          c.lastMessage ??
-                              (isGroup
-                                  ? 'You were added to the group'
-                                  : 'Start of conversation'),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textSecondary(context),
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(height: 2),
+                          Text(
+                            c.lastMessage ??
+                                (isGroup
+                                    ? 'You were added to the group'
+                                    : 'Start of conversation'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                              color: hasUnread
+                                  ? AppTheme.textPrimary(context)
+                                  : AppTheme.textSecondary(context),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                   ),
                 ],
               ),
@@ -681,7 +720,7 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
 
   Widget _buildMessageBubble(
     BuildContext context,
-    ChatMessage message,
+    Message message,
     bool isMe,
   ) {
     return Padding(
@@ -749,7 +788,7 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
                       ),
                     ),
                   Text(
-                    message.body,
+                    message.content,
                     style: TextStyle(
                       color: isMe
                           ? Colors.white
@@ -757,15 +796,24 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
                       fontSize: 14,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(message.createdAt),
-                    style: TextStyle(
-                      color: isMe
-                          ? Colors.white70
-                          : AppTheme.textSecondary(context),
-                      fontSize: 10,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTime(message.createdAt),
+                        style: TextStyle(
+                          color: isMe
+                              ? Colors.white70
+                              : AppTheme.textSecondary(context),
+                          fontSize: 10,
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 8),
+                        _buildStatusIndicator(context, message),
+                      ],
+                    ],
                   ),
                 ],
               ),
@@ -774,6 +822,90 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
           if (isMe) const SizedBox(width: 32),
           if (!isMe) const SizedBox(width: 32),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatusIndicator(BuildContext context, Message message) {
+    final status = message.status;
+    final conversation = _chatController.conversation;
+
+    // Status 0: Pending/Local -> Single check
+    if (status == 0) {
+      return const Icon(
+        Icons.check,
+        size: 14,
+        color: Colors.white70,
+      );
+    }
+
+    // Status 2: Pushed to Server -> Double check
+    if (status == 2) {
+      return const Icon(
+        Icons.done_all,
+        size: 14,
+        color: Colors.white70,
+      );
+    }
+
+    // Status 3: Seen -> Small avatar
+    if (status == 3) {
+      final otherMembers = conversation.members
+          .where((m) => m.userId != message.senderId)
+          .toList();
+
+      final avatarUrl = otherMembers.isNotEmpty ? otherMembers.first.avatar : null;
+      final initials = otherMembers.isNotEmpty && otherMembers.first.firstName.isNotEmpty
+          ? otherMembers.first.firstName[0].toUpperCase()
+          : '?';
+
+      if (avatarUrl != null && avatarUrl.isNotEmpty) {
+        return Container(
+          width: 14,
+          height: 14,
+          decoration: const BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white24,
+          ),
+          child: ClipOval(
+            child: Image.network(
+              avatarUrl,
+              width: 14,
+              height: 14,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(initials),
+            ),
+          ),
+        );
+      } else {
+        return _buildInitialsAvatar(initials);
+      }
+    }
+
+    // Fallback default: single check
+    return const Icon(
+      Icons.check,
+      size: 14,
+      color: Colors.white70,
+    );
+  }
+
+  Widget _buildInitialsAvatar(String initials) {
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: const BoxDecoration(
+        color: Colors.white24,
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          fontSize: 8,
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

@@ -1,11 +1,12 @@
 import 'package:conference/models/chat_message_model.dart';
 import 'package:conference/pages/team/service/chat_service.dart';
 import 'package:conference/theme/app_theme.dart';
+import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter/material.dart';
 
 /// Renders a message received from another participant.
 class ReceiverBubble extends StatelessWidget {
-  final ChatMessage message;
+  final Message message;
   final ChatService chatService = ChatService.instance;
 
   ReceiverBubble({

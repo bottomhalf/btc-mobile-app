@@ -1,9 +1,13 @@
+import 'dart:async';
 import 'package:conference/models/conversation.dart';
 import 'package:conference/models/user_model.dart';
+import 'package:conference/pages/team/service/chat_service.dart';
 import 'package:conference/services/http_service.dart';
 import 'package:conference/services/meeting_service.dart';
+import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
 import '../../models/chat_message_model.dart';
 
 class ChatDetailController extends GetxController {
@@ -13,7 +17,7 @@ class ChatDetailController extends GetxController {
     this.conversation = conversation ?? Get.arguments as Conversation;
   }
 
-  final RxList<ChatMessage> messages = <ChatMessage>[].obs;
+  final RxList<Message> messages = <Message>[].obs;
   final RxBool isLoading = true.obs;
   final RxBool isLoadingMore = false.obs;
   final RxBool isJoining = false.obs;
@@ -21,6 +25,8 @@ class ChatDetailController extends GetxController {
   final ScrollController scrollController = ScrollController();
   final _http = HttpService.instance;
   final _user = UserModel.instance;
+  final _chatService = ChatService.instance;
+  final List<StreamSubscription> _localSubscriptions = [];
 
   int _currentPage = 1;
   bool _hasMore = true;
@@ -30,12 +36,22 @@ class ChatDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _chatService.ws.currentConversationId.value = conversation.conversationId;
+      _chatService.unreadCounts[conversation.conversationId] = 0; // Clear unread badge
+    });
     scrollController.addListener(_onScroll);
     fetchMessages();
+    _setupSocketListeners();
   }
 
   @override
   void onClose() {
+    _chatService.ws.currentConversationId.value = null; // Unbind
+    for (final sub in _localSubscriptions) {
+      sub.cancel();
+    }
+    _localSubscriptions.clear();
     scrollController.dispose();
     messageController.dispose();
     super.onClose();
@@ -60,8 +76,26 @@ class ChatDetailController extends GetxController {
       if (response.responseBody != null) {
         final data = response.responseBody;
         if (data != null) {
-          final chatResponse = ChatMessageResponse.fromJson(data['searchResult']);
-          messages.value = chatResponse.messages;
+          final chatResponse = ChatMessageResponse.fromJson(
+            data['searchResult'],
+          );
+          
+          final serverMessages = chatResponse.messages;
+
+          // Fetch local pending messages (status == 0) for this conversation
+          final pending = ChatStorage.instance
+              .getAllMessages()
+              .where((m) => m.conversationId == conversation.conversationId && m.status == 0)
+              .toList();
+
+          // Sort pending messages descending by creation time (newest first)
+          pending.sort((a, b) {
+            final timeA = a.createdAt ?? DateTime.now();
+            final timeB = b.createdAt ?? DateTime.now();
+            return timeB.compareTo(timeA);
+          });
+
+          messages.value = [...pending, ...serverMessages];
           _hasMore = chatResponse.hasMore;
           _currentPage++;
         }
@@ -127,15 +161,28 @@ class ChatDetailController extends GetxController {
     final text = messageController.text.trim();
     if (text.isEmpty) return;
 
-    final newMessage = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      messageId: DateTime.now().millisecondsSinceEpoch.toString(),
+    final String generatedMessageId = const Uuid().v4();
+
+    final newMessage = Message(
       conversationId: conversation.conversationId,
-      senderId: 'currentUser', // In a real app, get from Auth service
+      messageId: generatedMessageId,
+      senderId: _user.userId,
       type: 'text',
-      body: text,
-      createdAt: DateTime.now(),
+      replyTo: null,
+      mentions: [],
+      reactions: [],
+      clientType: 'mobile',
+      createdAt: DateTime.fromMillisecondsSinceEpoch(
+        DateTime.now().millisecondsSinceEpoch,
+        isUtc: true,
+      ),
+      editedAt: null,
+      status: 0, // 0 = pending/local storage
+      content: text,
+      fileUrl: null,
     );
+
+    _chatService.ws.sendMessage(newMessage);
 
     // Insert at beginning because messages are latest-first
     messages.insert(0, newMessage);
@@ -149,5 +196,76 @@ class ChatDetailController extends GetxController {
         curve: Curves.easeOut,
       );
     }
+  }
+
+  void _setupSocketListeners() {
+    // 1. Listen for new incoming messages from other people
+    _localSubscriptions.add(
+      _chatService.ws.incomingMessage$.listen((Message message) {
+        if (message.conversationId == conversation.conversationId) {
+          final idx = messages.indexWhere((m) => m.messageId == message.messageId);
+          if (idx == -1) {
+            messages.insert(0, message);
+          }
+        }
+      })
+    );
+
+    // 2. Listen for outgoing message acknowledgements (status 2 - double tick)
+    _localSubscriptions.add(
+      _chatService.ws.outgoingMessage$.listen((Message message) {
+        if (message.conversationId == conversation.conversationId) {
+          final idx = messages.indexWhere((m) => m.messageId == message.messageId);
+          if (idx != -1) {
+            final updatedMsg = Message(
+              id: message.id,
+              messageId: message.messageId,
+              conversationId: message.conversationId,
+              senderId: message.senderId,
+              type: message.type,
+              content: message.content,
+              fileUrl: message.fileUrl,
+              replyTo: message.replyTo,
+              mentions: message.mentions,
+              reactions: message.reactions,
+              clientType: message.clientType,
+              createdAt: message.createdAt,
+              editedAt: message.editedAt,
+              status: 2, // 2 = Pushed / Double check
+            );
+            messages[idx] = updatedMsg;
+          }
+        }
+      })
+    );
+
+    // 3. Listen for seen updates (status 3 - small avatar)
+    _localSubscriptions.add(
+      _chatService.ws.seen$.listen((MessageSeen seenEvent) {
+        if (seenEvent.conversationId == conversation.conversationId) {
+          final idx = messages.indexWhere((m) => m.messageId == seenEvent.messageId);
+          if (idx != -1) {
+            final oldMsg = messages[idx];
+            final updatedMsg = Message(
+              id: oldMsg.id,
+              messageId: oldMsg.messageId,
+              conversationId: oldMsg.conversationId,
+              senderId: oldMsg.senderId,
+              type: oldMsg.type,
+              content: oldMsg.content,
+              fileUrl: oldMsg.fileUrl,
+              replyTo: oldMsg.replyTo,
+              mentions: oldMsg.mentions,
+              reactions: oldMsg.reactions,
+              clientType: oldMsg.clientType,
+              createdAt: oldMsg.createdAt,
+              editedAt: oldMsg.editedAt,
+              status: 3, // 3 = Seen / Small avatar
+            );
+            messages[idx] = updatedMsg;
+          }
+        }
+      })
+    );
   }
 }

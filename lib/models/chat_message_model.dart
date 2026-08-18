@@ -1,3 +1,5 @@
+import 'package:conference_sdk/conference_sdk.dart';
+
 class ChatMessage {
   final String id;
   final String messageId;
@@ -109,7 +111,7 @@ class ChatMessage {
 }
 
 class ChatMessageResponse {
-  final List<ChatMessage> messages;
+  final List<Message> messages;
   final int totalCount;
   final int page;
   final int pageSize;
@@ -130,7 +132,7 @@ class ChatMessageResponse {
   factory ChatMessageResponse.fromJson(Map<String, dynamic> json) {
     return ChatMessageResponse(
       messages: (json['messages'] as List<dynamic>?)
-              ?.map((e) => ChatMessage.fromJson(e as Map<String, dynamic>))
+              ?.map((e) => Message.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       totalCount: json['totalCount'] as int? ?? json['total_count'] as int? ?? 0,

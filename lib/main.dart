@@ -49,6 +49,7 @@ void main() async {
   await _checkPermissions();
   await AppConfig.initialize();
   await StorageService.instance.initialize();
+  await ChatStorage.instance.initialize();
   await HttpService.instance.initialize();
 
   // Register MeetingService as a permanent GetxService

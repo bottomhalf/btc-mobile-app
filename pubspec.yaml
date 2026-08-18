@@ -53,6 +53,7 @@ dependencies:
   just_audio: ^0.9.46
   conference_sdk:
     path: Package/conference_sdk
+  uuid: ^4.6.0
 
 
 flutter_native_splash:

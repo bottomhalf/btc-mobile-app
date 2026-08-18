@@ -67,7 +67,10 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
                     final message = controller.messages[index];
                     final isMe = message.senderId != UserModel.instance.userId;
                     return isMe
-                        ? SenderBubble(message: message)
+                        ? SenderBubble(
+                            message: message,
+                            conversation: controller.conversation,
+                          )
                         : ReceiverBubble(message: message);
                   },
                 ),

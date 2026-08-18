@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/call_model.dart';
+import '../store/chat_storage.dart';
 import 'messages/incoming/incoming_message_streams.dart';
 import 'messages/outgoing/outgoing_message_streams.dart';
 
@@ -132,9 +133,14 @@ class BtcMeetSocketService {
 
       _wsSubscription = _ws!.listen(
         (data) {
+          debugPrint('[BtcMeetSocketService] RECEIVE: $data');
           try {
             final Map<String, dynamic> json = jsonDecode(data as String);
             final event = WsEvent.fromJson(json);
+
+            // Update local DB cache first before sending to streams
+            _handleLocalDatabaseUpdates(event);
+
             _messageSubject.add(event);
           } catch (e) {
             debugPrint('[BtcMeetSocketService] Error parsing message: $e');
@@ -154,6 +160,58 @@ class BtcMeetSocketService {
       debugPrint('[BtcMeetSocketService] Connection failed: $error');
       _isConnecting = false;
       _handleDisconnect();
+    }
+  }
+
+  void _handleLocalDatabaseUpdates(WsEvent event) {
+    try {
+      if (event.event == WsEvents.newMessage) {
+        final msg = Message.fromJson(event.payload as Map<String, dynamic>);
+        ChatStorage.instance.saveMessage(msg);
+      } else if (event.event == WsEvents.messageSent) {
+        final msg = Message.fromJson(event.payload as Map<String, dynamic>);
+        final updatedMsg = Message(
+          id: msg.id,
+          messageId: msg.messageId,
+          conversationId: msg.conversationId,
+          senderId: msg.senderId,
+          type: msg.type,
+          content: msg.content,
+          fileUrl: msg.fileUrl,
+          replyTo: msg.replyTo,
+          mentions: msg.mentions,
+          reactions: msg.reactions,
+          clientType: msg.clientType,
+          createdAt: msg.createdAt,
+          editedAt: msg.editedAt,
+          status: 2, // 2 = Pushed / Double check
+        );
+        ChatStorage.instance.saveMessage(updatedMsg);
+      } else if (event.event == WsEvents.seen) {
+        final seenEvent = MessageSeen.fromJson(event.payload as Map<String, dynamic>);
+        final oldMsg = ChatStorage.instance.getMessage(seenEvent.messageId);
+        if (oldMsg != null) {
+          final updatedMsg = Message(
+            id: oldMsg.id,
+            messageId: oldMsg.messageId,
+            conversationId: oldMsg.conversationId,
+            senderId: oldMsg.senderId,
+            type: oldMsg.type,
+            content: oldMsg.content,
+            fileUrl: oldMsg.fileUrl,
+            replyTo: oldMsg.replyTo,
+            mentions: oldMsg.mentions,
+            reactions: oldMsg.reactions,
+            clientType: oldMsg.clientType,
+            createdAt: oldMsg.createdAt,
+            editedAt: oldMsg.editedAt,
+            status: 3, // 3 = Seen / Small avatar
+          );
+          ChatStorage.instance.saveMessage(updatedMsg);
+        }
+      }
+    } catch (e) {
+      debugPrint('[BtcMeetSocketService] Local DB sync error: $e');
     }
   }
 
@@ -179,7 +237,27 @@ class BtcMeetSocketService {
   // ─── Public Send APIs ───────────────────────────────────────────
 
   void sendMessage(Message message) {
-    _send(WsEvents.sendMessage, message.toJson());
+    // 1. Save to local cache first with status 0 (pending)
+    final localMsg = Message(
+      id: message.id,
+      messageId: message.messageId,
+      conversationId: message.conversationId,
+      senderId: message.senderId,
+      type: message.type,
+      content: message.content,
+      fileUrl: message.fileUrl,
+      replyTo: message.replyTo,
+      mentions: message.mentions,
+      reactions: message.reactions,
+      clientType: message.clientType,
+      createdAt: message.createdAt,
+      editedAt: message.editedAt,
+      status: 0, // Ensure status is 0 (pending)
+    );
+    ChatStorage.instance.saveMessage(localMsg);
+
+    // 2. Send over socket connection
+    _send(WsEvents.sendMessage, localMsg.toJson());
   }
 
   void sendMessageReaction(Map<String, dynamic> payload) {
@@ -228,6 +306,7 @@ class BtcMeetSocketService {
     if (_ws != null && _ws!.readyState == WebSocket.open) {
       final wsEvent = WsEvent(event: event, payload: payload);
       final jsonStr = jsonEncode(wsEvent.toJson());
+      debugPrint('[BtcMeetSocketService] SEND: $jsonStr');
       _ws!.add(jsonStr);
     } else {
       debugPrint('[BtcMeetSocketService] Cannot send event "$event": WS not open');

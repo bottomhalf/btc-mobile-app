@@ -4,6 +4,7 @@ export 'src/conference_manager.dart';
 export 'src/livekit_service.dart';
 export 'room/conference_room.dart';
 export 'websocket/websocket.dart';
+export 'websocket/store/chat_storage.dart';
 export 'package:livekit_client/livekit_client.dart'
     show Room, LocalParticipant, RemoteParticipant;
 

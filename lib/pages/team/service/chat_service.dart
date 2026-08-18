@@ -17,6 +17,7 @@ class ChatService extends GetxService {
   final RxBool isLoading = true.obs;
   final RxString errorMessage = ''.obs;
   final RxList<Conversation> conversations = <Conversation>[].obs;
+  final RxMap<String, int> unreadCounts = <String, int>{}.obs;
 
   final List<StreamSubscription> _subscriptions = [];
 
@@ -56,6 +57,16 @@ class ChatService extends GetxService {
         _subscriptions.add(
           ws.incomingMessage$.listen((Message event) {
             debugPrint('[ChatService] New message received: $event');
+            
+            final openConversationId = ws.currentConversationId.value;
+            if (openConversationId == event.conversationId) {
+              // Channel is open. Bind/integrate the message into the channel.
+              _updateConversationLastMessage(event);
+            } else {
+              // Channel is closed. Highlight and show notification symbol.
+              unreadCounts[event.conversationId] = (unreadCounts[event.conversationId] ?? 0) + 1;
+              _updateConversationLastMessage(event);
+            }
           })
         );
 
@@ -113,5 +124,32 @@ class ChatService extends GetxService {
         .toList();
 
     return result.isNotEmpty ? result.first.firstName : "Member";
+  }
+
+  void _updateConversationLastMessage(Message message) {
+    final idx = conversations.indexWhere((c) => c.conversationId == message.conversationId);
+    if (idx != -1) {
+      final convo = conversations[idx];
+      final updatedConvo = Conversation(
+        conversationId: convo.conversationId,
+        title: convo.title,
+        lastMessageAt: message.createdAt,
+        lastMessage: message.content,
+        memberCount: convo.memberCount,
+        members: convo.members,
+        type: convo.type,
+        createdAt: convo.createdAt,
+        createdBy: convo.createdBy,
+      );
+
+      conversations[idx] = updatedConvo;
+
+      // Sort conversations so the one with the newest message is first
+      conversations.sort((a, b) {
+        final timeA = a.lastMessageAt ?? a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        final timeB = b.lastMessageAt ?? b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+        return timeB.compareTo(timeA);
+      });
+    }
   }
 }

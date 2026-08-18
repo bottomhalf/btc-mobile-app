@@ -5,6 +5,7 @@ import '../../../models/user_model.dart';
 import '../../../models/participant.dart';
 import '../../../theme/app_theme.dart';
 import '../team_controller.dart';
+import '../service/chat_service.dart';
 
 /// Mobile-optimised team page.
 ///
@@ -217,57 +218,92 @@ class MobileTeamPage extends GetView<TeamController> {
               _buildAvatar(context, c),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.textPrimary(context),
+                child: Obx(() {
+                  final unreadCount = ChatService.instance.unreadCounts[c.conversationId] ?? 0;
+                  final hasUnread = unreadCount > 0;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: hasUnread ? FontWeight.w800 : FontWeight.w600,
+                                color: AppTheme.textPrimary(context),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          c.timeAgo,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textSecondary(context).withValues(alpha: 0.7),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                c.timeAgo,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: hasUnread ? FontWeight.bold : FontWeight.w500,
+                                  color: hasUnread
+                                      ? AppTheme.accentPurple
+                                      : AppTheme.textSecondary(context).withValues(alpha: 0.7),
+                                ),
+                              ),
+                              if (hasUnread) ...[
+                                const SizedBox(height: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accentPurple,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    '$unreadCount',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            c.lastMessage ??
-                                (isGroup
-                                    ? 'You were added to the group'
-                                    : 'Start of conversation'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                              color: AppTheme.textSecondary(context),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              c.lastMessage ??
+                                  (isGroup
+                                      ? 'You were added to the group'
+                                      : 'Start of conversation'),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: hasUnread ? FontWeight.bold : FontWeight.w400,
+                                color: hasUnread
+                                    ? AppTheme.textPrimary(context)
+                                    : AppTheme.textSecondary(context),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                        ],
+                      ),
+                    ],
+                  );
+                }),
               ),
             ],
           ),

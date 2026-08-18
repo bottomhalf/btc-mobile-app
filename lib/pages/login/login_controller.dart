@@ -73,11 +73,11 @@ class LoginController extends GetxController {
   void onInit() {
     super.onInit();
     if (_appConfig.env == 'development') {
-      emailCtrl.text = 'istiyaq.mi9@gmail.com';
-      passwordCtrl.text = 'istiyak';
+      emailCtrl.text = 'kumarvivek1502@gmail.com';
+      passwordCtrl.text = 'vivekkr';
     } else {
-      emailCtrl.text = 'istiyaq.mi9@gmail.com';
-      passwordCtrl.text = 'istiyak';
+      emailCtrl.text = 'kumarvivek1502@gmail.com';
+      passwordCtrl.text = 'vivekkr';
     }
   }
 

@@ -974,7 +974,7 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
                   color: AppTheme.textPrimary(context),
                   fontSize: 14,
                 ),
-                onSubmitted: (_) => _chatController.sendMessage(),
+                onSubmitted: (_) async => await _chatController.sendMessage(),
               ),
             ),
           ),

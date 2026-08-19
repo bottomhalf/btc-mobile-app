@@ -73,7 +73,7 @@ class MessageInput extends StatelessWidget {
                   color: AppTheme.textPrimary(context),
                   fontSize: 14,
                 ),
-                onSubmitted: (_) => controller.sendMessage(),
+                onSubmitted: (_) async => await controller.sendMessage(),
               ),
             ),
           ),

@@ -1,5 +1,5 @@
 {
-    "env": "production",
+    "env": "development",
     "apiBaseUrl": "http://192.168.29.204:7801/api/",
     "wsBaseUrl": "ws://192.168.29.204:7815/v1/cfgs/cf-sesion",
     "livekitUrl": "www.confeet.com",

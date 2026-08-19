@@ -1,6 +1,7 @@
 {
     "env": "production",
-    "apiBaseUrl": "https://www.confeet.com/api/",
+    "apiBaseUrl_live": "https://www.confeet.com/api/",
+    "apiBaseUrl": "http://192.168.29.204:7801/api/",
     "wsBaseUrl": "wss://www.confeet.com/v1/cfgs/cf-sesion",
     "livekitUrl": "www.confeet.com",
     "port": 443,

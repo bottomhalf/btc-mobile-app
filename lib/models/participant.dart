@@ -3,20 +3,24 @@ import 'package:conference/config/app_config.dart';
 class Participant {
   final String userId;
   final String firstName;
+  final String? lastName;
   final String email;
   final String? avatar;
   final String role;
   final int status;
   final DateTime lastSeen;
+  final DateTime? joinedAt;
 
   Participant({
     required this.userId,
     required this.firstName,
+    this.lastName,
     required this.email,
     this.avatar,
     required this.role,
     required this.status,
     required this.lastSeen,
+    this.joinedAt,
   });
 
   factory Participant.fromJson(Map<String, dynamic> json) {
@@ -33,16 +37,30 @@ class Participant {
         resolvedAvatar = cleanBase + cleanUrl;
       }
     }
+
+    // Parse status safely (handles both String e.g. "online", "1" and int)
+    int parsedStatus = 0;
+    final rawStatus = json['status'];
+    if (rawStatus is int) {
+      parsedStatus = rawStatus;
+    } else if (rawStatus is String) {
+      parsedStatus = int.tryParse(rawStatus) ?? (rawStatus.toLowerCase() == 'online' ? 1 : 0);
+    }
+
     return Participant(
-      userId: json['user_id'] as String? ?? '',
-      firstName: json['first_name'] as String? ?? '',
+      userId: json['user_id'] as String? ?? json['userId'] as String? ?? '',
+      firstName: json['first_name'] as String? ?? json['firstName'] as String? ?? '',
+      lastName: json['last_name'] as String? ?? json['lastName'] as String?,
       email: json['email'] as String? ?? '',
       avatar: resolvedAvatar,
       role: json['role'] as String? ?? '',
-      status: json['status'] as int? ?? 0,
+      status: parsedStatus,
       lastSeen: json['last_seen'] != null
           ? _parseDateTime(json['last_seen'])
-          : DateTime.fromMillisecondsSinceEpoch(0),
+          : (json['lastSeen'] != null ? _parseDateTime(json['lastSeen']) : DateTime.fromMillisecondsSinceEpoch(0)),
+      joinedAt: json['joined_at'] != null
+          ? _parseDateTime(json['joined_at'])
+          : (json['joinedAt'] != null ? _parseDateTime(json['joinedAt']) : null),
     );
   }
 
@@ -57,17 +75,19 @@ class Participant {
     return {
       'userId': userId,
       'firstName': firstName,
+      'lastName': lastName,
       'email': email,
       'avatar': avatar,
       'role': role,
       'status': status,
       'lastSeen': lastSeen.millisecondsSinceEpoch ~/ 1000,
+      'joinedAt': joinedAt?.millisecondsSinceEpoch,
     };
   }
 
   @override
   String toString() {
-    return 'Participant(userId: $userId, firstName: $firstName, email: $email, avatar: $avatar, role: $role, status: $status, lastSeen: $lastSeen)';
+    return 'Participant(userId: $userId, firstName: $firstName, lastName: $lastName, email: $email, avatar: $avatar, role: $role, status: $status, lastSeen: $lastSeen, joinedAt: $joinedAt)';
   }
 
   static DateTime _parseDateTime(dynamic value) {

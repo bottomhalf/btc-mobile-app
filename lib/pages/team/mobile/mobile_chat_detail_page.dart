@@ -16,7 +16,7 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface(context),
+      backgroundColor: const Color(0xFFF8F9FA),
       appBar: _buildAppBar(context),
       body: Column(
         children: [
@@ -65,7 +65,7 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
                     }
 
                     final message = controller.messages[index];
-                    final isMe = message.senderId != UserModel.instance.userId;
+                    final isMe = message.senderId == UserModel.instance.userId;
                     return isMe
                         ? SenderBubble(
                             message: message,

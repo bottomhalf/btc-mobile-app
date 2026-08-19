@@ -448,7 +448,7 @@ class DesktopChatDetailPage extends GetView<ChatDetailController> {
                   color: AppTheme.textPrimary(context),
                   fontSize: 14,
                 ),
-                onSubmitted: (_) => controller.sendMessage(),
+                onSubmitted: (_) async => await controller.sendMessage(),
               ),
             ),
           ),

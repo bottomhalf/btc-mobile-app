@@ -23,7 +23,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
         case 1: // Meet Page
           return _buildPageHeader(
             context,
-            title: 'Conference',
+            title: 'Confeet',
             subtitle: 'Start or join collaboration meetings',
             icon: Icons.videocam_rounded,
           );
@@ -245,7 +245,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Search',
+                                'Search by name, group or email',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: AppTheme.textSecondary(context).withValues(alpha: 0.7),

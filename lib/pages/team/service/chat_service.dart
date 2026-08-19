@@ -126,7 +126,41 @@ class ChatService extends GetxService {
     return result.isNotEmpty ? result.first.firstName : "Member";
   }
 
-  void _updateConversationLastMessage(Message message) {
+  Future<void> _updateConversationLastMessage(Message message) async {
+    final currentUserId = UserModel.instance.userId;
+    
+    // Check if the message was sent by the current user
+    if (message.senderId == currentUserId) {
+      try {
+        final localMsg = ChatStorage.instance.getMessage(message.messageId);
+        if (localMsg != null) {
+          final updatedMsg = Message(
+            id: localMsg.id,
+            messageId: localMsg.messageId,
+            conversationId: localMsg.conversationId,
+            senderId: localMsg.senderId,
+            type: localMsg.type,
+            content: localMsg.content,
+            fileUrl: localMsg.fileUrl,
+            replyTo: localMsg.replyTo,
+            mentions: localMsg.mentions,
+            reactions: localMsg.reactions,
+            clientType: localMsg.clientType,
+            createdAt: localMsg.createdAt,
+            editedAt: localMsg.editedAt,
+            status: 2, // Update status to 2 (Delivered)
+            receivedId: localMsg.receivedId,
+            isMentioned: localMsg.isMentioned,
+            seenByUserIds: localMsg.seenByUserIds,
+          );
+          await ChatStorage.instance.updateMessage(updatedMsg);
+          debugPrint('[ChatService] Updated local message ${message.messageId} status to 2');
+        }
+      } catch (e) {
+        debugPrint('[ChatService] Error updating local message status: $e');
+      }
+    }
+
     final idx = conversations.indexWhere((c) => c.conversationId == message.conversationId);
     if (idx != -1) {
       final convo = conversations[idx];
@@ -140,6 +174,13 @@ class ChatService extends GetxService {
         type: convo.type,
         createdAt: convo.createdAt,
         createdBy: convo.createdBy,
+        avatar: convo.avatar,
+        description: convo.description,
+        isDeleted: convo.isDeleted,
+        lastMessageId: convo.lastMessageId,
+        settings: convo.settings,
+        searchableMemberInfo: convo.searchableMemberInfo,
+        participantIds: convo.participantIds,
       );
 
       conversations[idx] = updatedConvo;

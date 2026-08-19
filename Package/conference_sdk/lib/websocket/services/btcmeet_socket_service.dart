@@ -237,27 +237,8 @@ class BtcMeetSocketService {
   // ─── Public Send APIs ───────────────────────────────────────────
 
   void sendMessage(Message message) {
-    // 1. Save to local cache first with status 0 (pending)
-    final localMsg = Message(
-      id: message.id,
-      messageId: message.messageId,
-      conversationId: message.conversationId,
-      senderId: message.senderId,
-      type: message.type,
-      content: message.content,
-      fileUrl: message.fileUrl,
-      replyTo: message.replyTo,
-      mentions: message.mentions,
-      reactions: message.reactions,
-      clientType: message.clientType,
-      createdAt: message.createdAt,
-      editedAt: message.editedAt,
-      status: 0, // Ensure status is 0 (pending)
-    );
-    ChatStorage.instance.saveMessage(localMsg);
-
     // 2. Send over socket connection
-    _send(WsEvents.sendMessage, localMsg.toJson());
+    _send(WsEvents.sendMessage, message.toJson());
   }
 
   void sendMessageReaction(Map<String, dynamic> payload) {

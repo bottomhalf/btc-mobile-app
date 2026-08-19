@@ -231,13 +231,14 @@ class ChatDetailController extends GetxController {
           isUtc: true,
         ),
         editedAt: null,
-        status: 0,
+        status: 1,
         // 0 = pending/local storage
         content: text,
         fileUrl: null,
       );
 
       _chatService.ws.sendMessage(newMessage);
+      await ChatStorage.instance.saveMessage(newMessage);
 
       // Insert at beginning because messages are latest-first
       messages.insert(0, newMessage);
@@ -273,8 +274,34 @@ class ChatDetailController extends GetxController {
           final idx = messages.indexWhere(
             (m) => m.messageId == message.messageId,
           );
+          
+          final isMe = message.senderId == _user.userId;
+          final resolvedMessage = isMe
+              ? Message(
+                  id: message.id,
+                  messageId: message.messageId,
+                  conversationId: message.conversationId,
+                  senderId: message.senderId,
+                  type: message.type,
+                  content: message.content,
+                  fileUrl: message.fileUrl,
+                  replyTo: message.replyTo,
+                  mentions: message.mentions,
+                  reactions: message.reactions,
+                  clientType: message.clientType,
+                  createdAt: message.createdAt,
+                  editedAt: message.editedAt,
+                  status: 2, // Map to double check status when acknowledged/broadcasted back
+                  receivedId: message.receivedId,
+                  isMentioned: message.isMentioned,
+                  seenByUserIds: message.seenByUserIds,
+                )
+              : message;
+
           if (idx == -1) {
-            messages.insert(0, message);
+            messages.insert(0, resolvedMessage);
+          } else {
+            messages[idx] = resolvedMessage;
           }
         }
       }),

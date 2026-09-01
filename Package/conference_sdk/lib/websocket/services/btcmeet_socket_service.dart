@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/call_model.dart';
-import '../store/chat_storage.dart';
+import 'message_event_handler.dart';
 import 'messages/incoming/incoming_message_streams.dart';
 import 'messages/outgoing/outgoing_message_streams.dart';
 
@@ -139,7 +139,7 @@ class BtcMeetSocketService {
             final event = WsEvent.fromJson(json);
 
             // Update local DB cache first before sending to streams
-            _handleLocalDatabaseUpdates(event);
+            BtcMeetSocketEventHandler.instance.handleEvent(event);
 
             _messageSubject.add(event);
           } catch (e) {
@@ -160,58 +160,6 @@ class BtcMeetSocketService {
       debugPrint('[BtcMeetSocketService] Connection failed: $error');
       _isConnecting = false;
       _handleDisconnect();
-    }
-  }
-
-  void _handleLocalDatabaseUpdates(WsEvent event) {
-    try {
-      if (event.event == WsEvents.newMessage) {
-        final msg = Message.fromJson(event.payload as Map<String, dynamic>);
-        ChatStorage.instance.saveMessage(msg);
-      } else if (event.event == WsEvents.messageSent) {
-        final msg = Message.fromJson(event.payload as Map<String, dynamic>);
-        final updatedMsg = Message(
-          id: msg.id,
-          messageId: msg.messageId,
-          conversationId: msg.conversationId,
-          senderId: msg.senderId,
-          type: msg.type,
-          content: msg.content,
-          fileUrl: msg.fileUrl,
-          replyTo: msg.replyTo,
-          mentions: msg.mentions,
-          reactions: msg.reactions,
-          clientType: msg.clientType,
-          createdAt: msg.createdAt,
-          editedAt: msg.editedAt,
-          status: 2, // 2 = Pushed / Double check
-        );
-        ChatStorage.instance.saveMessage(updatedMsg);
-      } else if (event.event == WsEvents.seen) {
-        final seenEvent = MessageSeen.fromJson(event.payload as Map<String, dynamic>);
-        final oldMsg = ChatStorage.instance.getMessage(seenEvent.messageId);
-        if (oldMsg != null) {
-          final updatedMsg = Message(
-            id: oldMsg.id,
-            messageId: oldMsg.messageId,
-            conversationId: oldMsg.conversationId,
-            senderId: oldMsg.senderId,
-            type: oldMsg.type,
-            content: oldMsg.content,
-            fileUrl: oldMsg.fileUrl,
-            replyTo: oldMsg.replyTo,
-            mentions: oldMsg.mentions,
-            reactions: oldMsg.reactions,
-            clientType: oldMsg.clientType,
-            createdAt: oldMsg.createdAt,
-            editedAt: oldMsg.editedAt,
-            status: 3, // 3 = Seen / Small avatar
-          );
-          ChatStorage.instance.saveMessage(updatedMsg);
-        }
-      }
-    } catch (e) {
-      debugPrint('[BtcMeetSocketService] Local DB sync error: $e');
     }
   }
 

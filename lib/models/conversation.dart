@@ -1,4 +1,5 @@
 import 'package:conference/models/participant.dart';
+import 'package:conference/models/presence_status.dart';
 
 class ConversationSettings {
   final bool allowReactions;
@@ -42,6 +43,8 @@ class Conversation {
   final String? description;
   final bool isDeleted;
   final String? lastMessageId;
+  final PresenceStatus status;
+  final DateTime? lastSeen;
   final ConversationSettings? settings;
   final List<String> searchableMemberInfo;
   final List<String> participantIds;
@@ -54,6 +57,8 @@ class Conversation {
     required this.memberCount,
     required this.members,
     required this.type,
+    this.status = PresenceStatus.unspecified,
+    this.lastSeen,
     this.createdAt,
     this.createdBy,
     this.avatar,
@@ -77,6 +82,9 @@ class Conversation {
       parsedSettings = ConversationSettings.fromJson(json['settings'] as Map<String, dynamic>);
     }
 
+    final parsedStatus = PresenceStatus.fromValue(json['status']);
+    final parsedLastSeen = _parseDateTime(json['last_seen'] ?? json['lastSeen']);
+
     return Conversation(
       conversationId: json['conversation_id'] as String? ?? json['id'] as String? ?? '',
       title: json['title'] as String? ?? '',
@@ -92,6 +100,8 @@ class Conversation {
       isDeleted: json['isDeleted'] as bool? ?? json['is_deleted'] as bool? ?? false,
       lastMessageId: json['lastMessageId'] as String? ?? json['last_message_id'] as String?,
       settings: parsedSettings,
+      status: parsedStatus,
+      lastSeen: parsedLastSeen,
       searchableMemberInfo: (json['searchableMemberInfo'] as List?)?.map((e) => e.toString()).toList() ?? const [],
       participantIds: (json['participant_ids'] as List?)?.map((e) => e.toString()).toList() ??
                       (json['participantIds'] as List?)?.map((e) => e.toString()).toList() ?? const [],
@@ -132,5 +142,28 @@ class Conversation {
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     if (diff.inDays < 7) return '${diff.inDays}d ago';
     return '${lastMessageAt!.day}/${lastMessageAt!.month}/${lastMessageAt!.year}';
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'conversation_id': conversationId,
+      'title': title,
+      'type': type,
+      'member_count': memberCount,
+      'members': members.map((m) => m.toJson()).toList(),
+      'lastMessage': lastMessage,
+      'lastMessageAt': lastMessageAt?.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
+      'created_by': createdBy,
+      'avatar': avatar,
+      'description': description,
+      'isDeleted': isDeleted,
+      'lastMessageId': lastMessageId,
+      'settings': settings?.toJson(),
+      'status': status.value,
+      'lastSeen': lastSeen?.toIso8601String(),
+      'searchableMemberInfo': searchableMemberInfo,
+      'participant_ids': participantIds,
+    };
   }
 }

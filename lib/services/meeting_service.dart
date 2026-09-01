@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:conference/config/app_config.dart';
 import 'package:conference/services/http_service.dart';
 import 'package:conference_sdk/conference_sdk.dart';
+import 'package:flutter_background/flutter_background.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -24,6 +27,7 @@ class MeetingService extends GetxService {
   final isMicOn = true.obs;
   final isCameraOn = true.obs;
   final isScreenSharing = false.obs;
+  final isControlsVisible = true.obs;
 
   // Renderable Tracks
   final activeScreenShareTrack = Rxn<VideoTrack>();
@@ -76,6 +80,7 @@ class MeetingService extends GetxService {
       isMicOn.value = false;
       isCameraOn.value = false;
       isScreenSharing.value = false;
+      isControlsVisible.value = true;
       isConnecting.value = false;
 
       // 4. Enable mic & camera in the background (don't block UI)
@@ -102,7 +107,43 @@ class MeetingService extends GetxService {
     }
   }
 
+  Future<bool> _startBackgroundExecution() async {
+    if (!Platform.isAndroid) return true;
+
+    try {
+      const androidConfig = FlutterBackgroundAndroidConfig(
+        notificationTitle: "Screen Sharing Active",
+        notificationText: "Confeet is sharing your screen in the meeting",
+        notificationImportance: AndroidNotificationImportance.normal,
+        notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
+      );
+
+      final initialized = await FlutterBackground.initialize(androidConfig: androidConfig);
+      if (initialized) {
+        if (!FlutterBackground.isBackgroundExecutionEnabled) {
+          return await FlutterBackground.enableBackgroundExecution();
+        }
+        return true;
+      }
+    } catch (e) {
+      debugPrint("FlutterBackground initialize error: $e");
+    }
+    return false;
+  }
+
+  Future<void> _stopBackgroundExecution() async {
+    if (!Platform.isAndroid) return;
+    try {
+      if (FlutterBackground.isBackgroundExecutionEnabled) {
+        await FlutterBackground.disableBackgroundExecution();
+      }
+    } catch (e) {
+      debugPrint("FlutterBackground disable error: $e");
+    }
+  }
+
   Future<void> leaveMeeting() async {
+    await _stopBackgroundExecution();
     await _roomListener?.dispose();
     _roomListener = null;
 
@@ -115,6 +156,7 @@ class MeetingService extends GetxService {
     isMicOn.value = true;
     isCameraOn.value = true;
     isScreenSharing.value = false;
+    isControlsVisible.value = true;
     activeScreenShareTrack.value = null;
     activeVideoTrack.value = null;
     participantCount.value = 1;
@@ -194,20 +236,50 @@ class MeetingService extends GetxService {
   }
 
   Future<void> toggleScreenShare() async {
+    if (_room == null) return;
     final newState = !isScreenSharing.value;
-    isScreenSharing.value = newState;
-    await _room?.localParticipant?.setScreenShareEnabled(newState);
 
-    // Attempt to quickly grab our local sharing track from our participant object
     if (newState) {
-      final pub = _room?.localParticipant?.getTrackPublicationBySource(
-        TrackSource.screenShareVideo,
-      );
-      if (pub?.track is VideoTrack) {
-        activeScreenShareTrack.value = pub?.track as VideoTrack;
+      try {
+        if (Platform.isAndroid) {
+          // 1. Request capture permission from system first (Android 14 requirement)
+          final hasCapturePermission = await Helper.requestCapturePermission();
+          if (!hasCapturePermission) {
+            debugPrint("Screen capture permission was not granted by user");
+            return;
+          }
+          // 2. Start foreground service with mediaProjection type now that consent is given
+          final startedBg = await _startBackgroundExecution();
+          if (!startedBg) {
+            debugPrint("Failed to start background execution for screen share");
+          }
+        }
+
+        // 3. Enable screen sharing in LiveKit
+        await _room?.localParticipant?.setScreenShareEnabled(true, captureScreenAudio: false);
+        isScreenSharing.value = true;
+
+        final pub = _room?.localParticipant?.getTrackPublicationBySource(
+          TrackSource.screenShareVideo,
+        );
+        if (pub?.track is VideoTrack) {
+          activeScreenShareTrack.value = pub?.track as VideoTrack;
+        }
+      } catch (e) {
+        debugPrint("Screen share failed: $e");
+        isScreenSharing.value = false;
+        activeScreenShareTrack.value = null;
+        await _stopBackgroundExecution();
       }
     } else {
+      try {
+        await _room?.localParticipant?.setScreenShareEnabled(false);
+      } catch (e) {
+        debugPrint("Disable screen share failed: $e");
+      }
+      isScreenSharing.value = false;
       activeScreenShareTrack.value = null;
+      await _stopBackgroundExecution();
     }
   }
 
@@ -218,4 +290,7 @@ class MeetingService extends GetxService {
 
   /// Switch to full-screen mode.
   void maximize() => isFullScreen.value = true;
+
+  /// Toggle visibility of overlay controls (top bar & bottom controls).
+  void toggleControls() => isControlsVisible.value = !isControlsVisible.value;
 }

@@ -17,7 +17,7 @@ class ChatDetailController extends GetxController {
     this.conversation = conversation ?? Get.arguments as Conversation;
   }
 
-  final RxList<Message> messages = <Message>[].obs;
+  RxList<Message> get messages => _chatService.activeMessages;
   final RxBool isLoading = true.obs;
   final RxBool isLoadingMore = false.obs;
   final RxBool isJoining = false.obs;
@@ -42,12 +42,18 @@ class ChatDetailController extends GetxController {
           0; // Clear unread badge
     });
     scrollController.addListener(_onScroll);
+    
+    // 1. Load local cached messages first
+    _loadLocalCachedMessages();
+
+    // 2. Fetch server messages in background
     fetchMessages();
     _setupSocketListeners();
   }
 
   @override
   void onClose() {
+    _chatService.activeMessages.clear(); // Clear so next chat starts fresh
     _chatService.ws.currentConversationId.value = null; // Unbind
     for (final sub in _localSubscriptions) {
       sub.cancel();
@@ -65,8 +71,104 @@ class ChatDetailController extends GetxController {
     }
   }
 
+  /// Marks all incoming unread messages in the loaded list as seen,
+  /// sending a markSeen WebSocket event and updating local database status.
+  void markIncomingMessagesAsSeen(List<Message> loadedMessages) {
+    try {
+      final currentUserId = _user.userId;
+      if (currentUserId.isEmpty) return;
+
+      bool didUpdateAny = false;
+
+      for (final msg in loadedMessages) {
+        // Only mark messages sent by others that are not already marked seen (status == 3)
+        if (msg.senderId != currentUserId && msg.status != 3) {
+          debugPrint('[ChatDetailController] Marking message as seen: ${msg.messageId}');
+          
+          // 1. Send socket event to notify sender / server
+          _chatService.ws.markSeen(
+            msg.messageId,
+            currentUserId,
+            conversation.conversationId,
+          );
+
+          // 2. Create updated message with status = 3
+          final updatedMsg = Message(
+            id: msg.id,
+            messageId: msg.messageId,
+            conversationId: msg.conversationId,
+            senderId: msg.senderId,
+            type: msg.type,
+            content: msg.content,
+            fileUrl: msg.fileUrl,
+            replyTo: msg.replyTo,
+            mentions: msg.mentions,
+            reactions: msg.reactions,
+            clientType: msg.clientType,
+            createdAt: msg.createdAt,
+            editedAt: msg.editedAt,
+            status: 3, // 3 = Seen
+            receivedId: msg.receivedId,
+            isMentioned: msg.isMentioned,
+            seenByUserIds: msg.seenByUserIds != null
+                ? {...msg.seenByUserIds!, currentUserId}.toList()
+                : [currentUserId],
+          );
+          
+          // 3. Save to local storage
+          ChatStorage.instance.saveMessage(updatedMsg);
+
+          // 4. Update the in-memory RxList to re-render in UI
+          final idx = messages.indexWhere((m) => m.messageId == msg.messageId);
+          if (idx != -1) {
+            messages[idx] = updatedMsg;
+            didUpdateAny = true;
+          }
+        }
+      }
+      
+      if (didUpdateAny) {
+        messages.refresh();
+      }
+    } catch (e) {
+      debugPrint('[ChatDetailController] Error marking messages as seen: $e');
+    }
+  }
+
+  /// Loads cached messages from Hive storage for immediate offline-first rendering.
+  void _loadLocalCachedMessages() {
+    try {
+      final List<Message> cached = ChatStorage.instance
+          .getAllMessages()
+          .where((m) => m.conversationId == conversation.conversationId)
+          .toList();
+
+      if (cached.isNotEmpty) {
+        // Sort descending by creation time (newest first)
+        cached.sort((a, b) {
+          final timeA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final timeB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+          return timeB.compareTo(timeA);
+        });
+
+        messages.value = cached;
+        isLoading.value = false;
+        debugPrint('[ChatDetailController] Loaded ${cached.length} messages from Hive.');
+
+        // Mark local cached unread messages as seen
+        markIncomingMessagesAsSeen(cached);
+      } else {
+        // Keep loading = true to show spinner until server responds
+        isLoading.value = true;
+        debugPrint('[ChatDetailController] No cached messages found. Waiting for server fetch.');
+      }
+    } catch (e) {
+      debugPrint('[ChatDetailController] Error loading cached messages: $e');
+    }
+  }
+
+  /// Fetches latest messages from server in the background and merges them with local cache.
   Future<void> fetchMessages() async {
-    isLoading.value = true;
     _currentPage = 1;
     _hasMore = true;
     try {
@@ -81,28 +183,41 @@ class ChatDetailController extends GetxController {
             data['searchResult'],
           );
 
-          final serverMessages = chatResponse.messages;
+          final List<Message> serverMessages = chatResponse.messages;
 
-          // Fetch local pending messages (status == 0) for this conversation
-          final pending = ChatStorage.instance
+          // Load local cached messages to merge
+          final List<Message> localCached = ChatStorage.instance
               .getAllMessages()
-              .where(
-                (m) =>
-                    m.conversationId == conversation.conversationId &&
-                    m.status == 0,
-              )
+              .where((m) => m.conversationId == conversation.conversationId)
               .toList();
 
-          // Sort pending messages descending by creation time (newest first)
-          pending.sort((a, b) {
-            final timeA = a.createdAt ?? DateTime.now();
-            final timeB = b.createdAt ?? DateTime.now();
+          final Map<String, Message> mergedMap = {};
+
+          // Add all local cached messages first
+          for (final msg in localCached) {
+            mergedMap[msg.messageId] = msg;
+          }
+
+          // Add server messages, overwriting the matching local ones (taking server as source of truth)
+          for (final msg in serverMessages) {
+            mergedMap[msg.messageId] = msg;
+          }
+
+          final List<Message> mergedList = mergedMap.values.toList();
+
+          // Sort merged list descending by creation time (newest first)
+          mergedList.sort((a, b) {
+            final timeA = a.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
+            final timeB = b.createdAt ?? DateTime.fromMillisecondsSinceEpoch(0);
             return timeB.compareTo(timeA);
           });
 
-          messages.value = [...pending, ...serverMessages];
+          messages.value = mergedList;
           _hasMore = chatResponse.hasMore;
           _currentPage++;
+
+          // Mark fetched server unread messages as seen
+          markIncomingMessagesAsSeen(serverMessages);
         }
       }
     } catch (e) {
@@ -129,6 +244,9 @@ class ChatDetailController extends GetxController {
           messages.addAll(chatResponse.messages);
           _hasMore = chatResponse.hasMore;
           _currentPage++;
+
+          // Mark more loaded unread messages as seen
+          markIncomingMessagesAsSeen(chatResponse.messages);
         }
       }
     } catch (e) {
@@ -303,6 +421,8 @@ class ChatDetailController extends GetxController {
           } else {
             messages[idx] = resolvedMessage;
           }
+          // Mark real-time incoming messages as seen
+          markIncomingMessagesAsSeen([resolvedMessage]);
         }
       }),
     );

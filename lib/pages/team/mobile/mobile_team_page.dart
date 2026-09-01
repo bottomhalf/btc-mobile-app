@@ -1,4 +1,5 @@
 import 'package:conference/models/conversation.dart';
+import 'package:conference/models/presence_status.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../models/user_model.dart';
@@ -474,7 +475,6 @@ class MobileTeamPage extends GetView<TeamController> {
       );
 
       final hasImage = otherMember.avatar != null && otherMember.avatar!.isNotEmpty;
-      final isOnline = otherMember.status == 1;
 
       return Stack(
         clipBehavior: Clip.none,
@@ -495,26 +495,104 @@ class MobileTeamPage extends GetView<TeamController> {
                   : _buildInitialsWithGradient(colorPair, initials),
             ),
           ),
-          // Active/Online indicator dot
+          // Active/Online indicator dot/icon
           Positioned(
             bottom: 0,
             right: 0,
-            child: Container(
-              width: 14,
-              height: 14,
-              decoration: BoxDecoration(
-                color: isOnline ? const Color(0xFF2ECC71) : const Color(0xFF95A5A6),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppTheme.card(context),
-                  width: 2.5,
-                ),
-              ),
-            ),
+            child: _buildStatusDot(context, otherMember.status),
           ),
         ],
       );
     }
+  }
+
+  Widget _buildStatusDot(BuildContext context, int statusCode) {
+    final status = PresenceStatus.fromValue(statusCode);
+    Color color;
+    Widget? child;
+    Border border = Border.all(
+      color: AppTheme.card(context),
+      width: 2.0,
+    );
+
+    switch (status) {
+      case PresenceStatus.online:
+        color = const Color(0xFF2ECC71); // Green background
+        child = const Icon(
+          Icons.check_rounded,
+          size: 9,
+          color: Colors.white, // White check mark
+        );
+        break;
+      case PresenceStatus.offline:
+        color = Colors.white; // White background
+        border = Border.all(
+          color: const Color(0xFFE74C3C), // Red border
+          width: 1.5,
+        );
+        child = const Icon(
+          Icons.close_rounded,
+          size: 9,
+          color: Color(0xFFE74C3C), // Red cross
+        );
+        break;
+      case PresenceStatus.away:
+        color = const Color(0xFFF1C40F); // Orange/Amber
+        child = const Icon(
+          Icons.access_time_filled_rounded,
+          size: 8,
+          color: Colors.white,
+        );
+        break;
+      case PresenceStatus.busy:
+        color = const Color(0xFFE74C3C); // Red
+        child = const Icon(
+          Icons.remove_rounded,
+          size: 8,
+          color: Colors.white,
+        );
+        break;
+      case PresenceStatus.dnd:
+        color = const Color(0xFFE74C3C); // Red
+        child = const Icon(
+          Icons.do_not_disturb_on_rounded,
+          size: 9,
+          color: Colors.white,
+        );
+        break;
+      case PresenceStatus.invisible:
+        color = const Color(0xFF7F8C8D); // Darker Grey
+        child = const Icon(
+          Icons.visibility_off_rounded,
+          size: 8,
+          color: Colors.white,
+        );
+        break;
+      case PresenceStatus.unspecified:
+        color =  Colors.white; // White background
+        border = Border.all(
+          color: const Color(0xFFE74C3C), // Red border
+          width: 1.5,
+        );
+        child = const Icon(
+          Icons.question_mark,
+          size: 8,
+          color: Color(0xFFE74C3C), // Red cross
+        );
+        break;
+    }
+
+    return Container(
+      width: 14,
+      height: 14,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        border: border,
+      ),
+      child: child,
+    );
   }
 
   Widget _buildInitialsAvatar(Participant p) {

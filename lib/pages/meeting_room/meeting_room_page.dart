@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:conference/config/app_config.dart';
 import 'package:conference/services/http_service.dart';
 import 'package:conference/services/meeting_service.dart';
 import 'package:conference_sdk/conference_sdk.dart';
+import 'package:flutter_background/flutter_background.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -80,8 +83,42 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
     }
   }
 
+  Future<bool> _startBackgroundExecution() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      const androidConfig = FlutterBackgroundAndroidConfig(
+        notificationTitle: "Screen Sharing Active",
+        notificationText: "Confeet is sharing your screen in the meeting",
+        notificationImportance: AndroidNotificationImportance.normal,
+        notificationIcon: AndroidResource(name: 'ic_launcher', defType: 'mipmap'),
+      );
+      final initialized = await FlutterBackground.initialize(androidConfig: androidConfig);
+      if (initialized) {
+        if (!FlutterBackground.isBackgroundExecutionEnabled) {
+          return await FlutterBackground.enableBackgroundExecution();
+        }
+        return true;
+      }
+    } catch (e) {
+      debugPrint("FlutterBackground initialize error: $e");
+    }
+    return false;
+  }
+
+  Future<void> _stopBackgroundExecution() async {
+    if (!Platform.isAndroid) return;
+    try {
+      if (FlutterBackground.isBackgroundExecutionEnabled) {
+        await FlutterBackground.disableBackgroundExecution();
+      }
+    } catch (e) {
+      debugPrint("FlutterBackground disable error: $e");
+    }
+  }
+
   @override
   void dispose() {
+    _stopBackgroundExecution();
     // Clean up — disconnect if still connected
     _room?.disconnect();
     super.dispose();
@@ -99,13 +136,40 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
 
   Future<void> _toggleScreenShare() async {
     final newState = !_isScreenSharing;
-    await _room?.localParticipant?.setScreenShareEnabled(newState);
-    if (!mounted) return;
-    setState(() => _isScreenSharing = newState);
+    if (newState) {
+      try {
+        if (Platform.isAndroid) {
+          final hasCapturePermission = await Helper.requestCapturePermission();
+          if (!hasCapturePermission) {
+            debugPrint("Screen capture permission was not granted by user");
+            return;
+          }
+          await _startBackgroundExecution();
+        }
+        await _room?.localParticipant?.setScreenShareEnabled(true, captureScreenAudio: false);
+        if (!mounted) return;
+        setState(() => _isScreenSharing = true);
+      } catch (e) {
+        debugPrint("Screen share failed: $e");
+        await _stopBackgroundExecution();
+        if (!mounted) return;
+        setState(() => _isScreenSharing = false);
+      }
+    } else {
+      try {
+        await _room?.localParticipant?.setScreenShareEnabled(false);
+      } catch (e) {
+        debugPrint("Disable screen share failed: $e");
+      }
+      await _stopBackgroundExecution();
+      if (!mounted) return;
+      setState(() => _isScreenSharing = false);
+    }
   }
 
   Future<void> _leaveMeeting() async {
     setState(() => _isLeaving = true);
+    await _stopBackgroundExecution();
     await _room?.disconnect();
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -315,17 +379,21 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
                     if (screenTrack != null) {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(24),
-                        child: VideoTrackRenderer(
-                          screenTrack,
-                          fit: VideoViewFit.contain,
+                        child: IgnorePointer(
+                          child: VideoTrackRenderer(
+                            screenTrack,
+                            fit: VideoViewFit.contain,
+                          ),
                         ),
                       );
                     } else if (videoTrack != null) {
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(24),
-                        child: VideoTrackRenderer(
-                          videoTrack,
-                          fit: VideoViewFit.cover,
+                        child: IgnorePointer(
+                          child: VideoTrackRenderer(
+                            videoTrack,
+                            fit: VideoViewFit.cover,
+                          ),
                         ),
                       );
                     }

@@ -42,6 +42,7 @@ Future<void> _checkPermissions() async {
   if (status.isPermanentlyDenied) {
     debugPrint('Bluetooth Connect Permission disabled');
   }
+  await Permission.notification.request();
 }
 
 void main() async {

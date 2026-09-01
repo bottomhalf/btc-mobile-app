@@ -207,9 +207,11 @@ class ParticipantGrid extends StatelessWidget {
             children: [
               if (isCameraOn)
                 Positioned.fill(
-                  child: VideoTrackRenderer(
-                    cameraTrack,
-                    fit: VideoViewFit.contain,
+                  child: IgnorePointer(
+                    child: VideoTrackRenderer(
+                      cameraTrack,
+                      fit: VideoViewFit.contain,
+                    ),
                   ), // using contain to avoid cropping vertically
                 )
               else ...[

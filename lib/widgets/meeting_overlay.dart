@@ -112,11 +112,15 @@ class _MeetingOverlayState extends State<MeetingOverlay> {
             if (_service.errorMessage.value != null) {
               return const ErrorState();
             }
-            return const Column(
-              children: [
-                TopBar(),
-                Expanded(child: VideoArea()),
-              ],
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _service.toggleControls,
+              child: const Column(
+                children: [
+                  TopBar(),
+                  Expanded(child: VideoArea()),
+                ],
+              ),
             );
           }),
         ),

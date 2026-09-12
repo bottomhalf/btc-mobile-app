@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 class AppTheme {
   AppTheme._();
 
-  // ─── Dark Mode Brand Colours ───────────────────────────────────
+  // ─── Dark Mode Brand Colours (Shiny Black / Obsidian) ────────
   static const Color _primaryIndigo = Color(0xFF6264A7);
   static const Color _accentPurple = Color(0xFF7B83EB);
-  static const Color _surfaceDark = Color(0xFF1B1A2E);
-  static const Color _cardDark = Color(0xFF252440);
-  static const Color _cardDarkAlt = Color(0xFF2D2B50);
-  static const Color _textPrimaryDark = Color(0xFFF5F5F9);
-  static const Color _textSecondaryDark = Color(0xFFB0AFCF);
-  static const Color _dividerDark = Color(0xFF3A3860);
+  static const Color _surfaceDark = Color(0xFF09090C);       // Pitch-black canvas base
+  static const Color _cardDark = Color(0xFF131318);          // Sleek shiny obsidian card surface
+  static const Color _cardDarkAlt = Color(0xFF1E1E26);       // Shiny elevated surface & input fill
+  static const Color _textPrimaryDark = Color(0xFFF8F9FD);   // Crisp luminescent white text
+  static const Color _textSecondaryDark = Color(0xFFA2A2B2); // Polished platinum metallic silver
+  static const Color _dividerDark = Color(0xFF2A2A34);       // Specular highlight border
   static const Color _errorRed = Color(0xFFFF6B6B);
   static const Color _successGreen = Color(0xFF4ADE80);
 
@@ -37,7 +37,7 @@ class AppTheme {
   );
 
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF252440), Color(0xFF2D2B50)],
+    colors: [Color(0xFF22222A), Color(0xFF131318), Color(0xFF0A0A0E)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -75,7 +75,21 @@ class AppTheme {
         color: _cardDark,
         elevation: 0,
         margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: _dividerDark, width: 0.8),
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: _cardDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: _dividerDark, width: 0.8),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: _cardDark,
+        modalBackgroundColor: _cardDark,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -303,4 +317,32 @@ class AppTheme {
   static Color get accentPurple => _accentPurple;
   static Color get errorRed => _errorRed;
   static Color get successGreen => _successGreen;
+
+  /// Returns a rich full-page background gradient reflecting the current theme.
+  /// In dark mode, provides a deep obsidian shiny-black roll-off gradient.
+  static LinearGradient pageGradient(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF16161C), Color(0xFF09090C)],
+          )
+        : const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFFF3F5FA), Color(0xFFE8ECF5)],
+          );
+  }
+
+  /// Returns a shiny specular card gradient reflecting current theme.
+  static LinearGradient shinyCardGradient(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF24242D), Color(0xFF141418), Color(0xFF0E0E12)],
+            stops: [0.0, 0.5, 1.0],
+          )
+        : cardGradient;
+  }
 }

@@ -18,8 +18,33 @@ class MeetController extends GetxController {
 
   // ─── Recent Meetings ────────────────────────────────────────────
   final quickMeetings = <QuickMeetings>[].obs;
+  final scheduledMeetings = <QuickMeetings>[].obs;
+  final allMeetings = <QuickMeetings>[].obs;
   final isLoadingMeetings = true.obs;
   final meetingsError = Rxn<String>();
+
+  // Filter: 0 = All, 1 = Scheduled, 2 = Quick
+  final selectedFilter = 0.obs;
+  final showAllMeetings = false.obs;
+
+  List<QuickMeetings> get displayedMeetings {
+    List<QuickMeetings> list;
+    switch (selectedFilter.value) {
+      case 1:
+        list = scheduledMeetings;
+        break;
+      case 2:
+        list = quickMeetings;
+        break;
+      default:
+        list = allMeetings;
+        break;
+    }
+    if (!showAllMeetings.value && list.length > 6) {
+      return list.take(6).toList();
+    }
+    return list;
+  }
 
   Future<void> fetchRecentMeetings() async {
     isLoadingMeetings.value = true;
@@ -29,13 +54,39 @@ class MeetController extends GetxController {
       ApiResponse response = await http.get('meeting/getAllMeetingByOrganizer');
 
       if (response.responseBody != null) {
-        final body = response.responseBody as Map<String, dynamic>;
-        final data = body['QuickMeetings'] as List<dynamic>? ?? [];
-        final meetings = data
-            .map((e) => QuickMeetings.fromJson(e as Map<String, dynamic>))
-            .take(6)
+        final body = response.responseBody is Map
+            ? Map<String, dynamic>.from(response.responseBody as Map)
+            : <String, dynamic>{};
+        final qData = (body['QuickMeetings'] ?? body['quickMeetings']) as List<dynamic>? ?? [];
+        final sData = (body['ScheduledMeetings'] ?? body['scheduledMeetings']) as List<dynamic>? ?? [];
+
+        final qMeetings = qData
+            .whereType<Map>()
+            .map((e) => QuickMeetings.fromJson(Map<String, dynamic>.from(e)))
             .toList();
-        quickMeetings.value = meetings;
+
+        final sMeetings = sData
+            .whereType<Map>()
+            .map((e) => QuickMeetings.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+
+        quickMeetings.value = qMeetings;
+        scheduledMeetings.value = sMeetings;
+
+        final combined = <QuickMeetings>[...sMeetings, ...qMeetings];
+        combined.sort((a, b) {
+          if (a.startDate != null && b.startDate != null) {
+            final cmp = b.startDate!.compareTo(a.startDate!);
+            if (cmp != 0) return cmp;
+          } else if (a.startDate != null) {
+            return -1;
+          } else if (b.startDate != null) {
+            return 1;
+          }
+          return b.meetingDetailId.compareTo(a.meetingDetailId);
+        });
+
+        allMeetings.value = combined;
       }
     } catch (e) {
       debugPrint('Failed to load recent meetings: $e');

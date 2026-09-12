@@ -19,6 +19,8 @@ class MessageInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
       color: Colors.transparent,
@@ -27,16 +29,30 @@ class MessageInput extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 860),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
-            color: AppTheme.card(context),
+            color: isDark ? null : AppTheme.card(context),
+            gradient: isDark
+                ? const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF222228),
+                      Color(0xFF141419),
+                      Color(0xFF0F0F14),
+                    ],
+                    stops: [0.0, 0.45, 1.0],
+                  )
+                : null,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: AppTheme.divider(context).withValues(alpha: 0.6),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : AppTheme.divider(context).withValues(alpha: 0.6),
               width: 1.2,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
+                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.04),
+                blurRadius: isDark ? 14 : 10,
                 offset: const Offset(0, 2),
               ),
             ],

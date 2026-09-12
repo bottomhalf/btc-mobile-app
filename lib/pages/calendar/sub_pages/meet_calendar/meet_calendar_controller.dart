@@ -1,4 +1,5 @@
 import 'package:get/get.dart';
+import 'package:conference/models/quick_meetings.dart';
 
 class MeetCalendarController extends GetxController {
   final Rx<DateTime> currentMonth = DateTime.now().obs;
@@ -60,6 +61,23 @@ class MeetCalendarController extends GetxController {
 
   String _formatDateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  void addEventFromMeeting(QuickMeetings meeting) {
+    if (meeting.startDate == null) return;
+    final key = _formatDateKey(meeting.startDate!);
+    final hour = meeting.startDate!.hour.toString().padLeft(2, '0');
+    final minute = meeting.startDate!.minute.toString().padLeft(2, '0');
+    final newEvent = {
+      'title': meeting.title,
+      'time': '$hour:$minute',
+      'duration': '${(meeting.durationInSecond / 60).round()} mins',
+      'type': 'meeting',
+      'organizer': meeting.organizerName.isNotEmpty ? meeting.organizerName : 'Me',
+    };
+    final currentList = List<Map<String, String>>.from(events[key] ?? []);
+    currentList.add(newEvent);
+    events[key] = currentList;
   }
 
   List<Map<String, String>> getEventsForSelectedDate() {

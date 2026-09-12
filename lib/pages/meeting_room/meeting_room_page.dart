@@ -6,6 +6,7 @@ import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:flutter/material.dart';
+import '../../services/meeting_service.dart';
 import '../../theme/app_theme.dart';
 import 'widgets/meeting_bottom_controls.dart';
 import 'widgets/participant_grid.dart';
@@ -13,8 +14,15 @@ import 'widgets/participants_list_sheet.dart';
 
 class MeetingRoomPage extends StatefulWidget {
   final ConferenceManager conferenceManager;
+  final String? meetingTitle;
+  final VoidCallback? onMinimize;
 
-  const MeetingRoomPage({super.key, required this.conferenceManager});
+  const MeetingRoomPage({
+    super.key,
+    required this.conferenceManager,
+    this.meetingTitle,
+    this.onMinimize,
+  });
 
   @override
   State<MeetingRoomPage> createState() => _MeetingRoomPageState();
@@ -210,10 +218,41 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
     Navigator.of(context).pop();
   }
 
+  String get _displayTitle {
+    if (widget.meetingTitle != null && widget.meetingTitle!.trim().isNotEmpty) {
+      return widget.meetingTitle!.trim();
+    }
+    if (_room?.name != null && _room!.name!.trim().isNotEmpty) {
+      return _room!.name!.trim();
+    }
+    if (MeetingService.instance.meetingName.trim().isNotEmpty) {
+      return MeetingService.instance.meetingName.trim();
+    }
+    return 'In Meeting';
+  }
+
+  void _handleMinimize() {
+    if (widget.onMinimize != null) {
+      widget.onMinimize!();
+      return;
+    }
+    if (MeetingService.instance.isInMeeting.value) {
+      MeetingService.instance.minimize();
+    }
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    }
+  }
+
   void _showParticipantsSheet() {
+    final list = _participants.isNotEmpty
+        ? _participants
+        : (MeetingService.instance.isInMeeting.value
+            ? MeetingService.instance.participants.toList()
+            : <Participant>[]);
     ParticipantsListSheet.show(
       context,
-      participants: _participants,
+      participants: list,
       isMicOn: _isMicOn,
       isCameraOn: _isCameraOn,
     );
@@ -221,14 +260,26 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.surface(context),
-      body: SafeArea(
-        child: _isConnecting
-            ? _buildConnectingState()
-            : _errorMessage != null
-            ? _buildErrorState()
-            : _buildMeetingUI(context),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) {
+          if (_isConnecting || _errorMessage != null) {
+            Navigator.of(context).pop();
+          } else {
+            _handleMinimize();
+          }
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppTheme.surface(context),
+        body: SafeArea(
+          child: _isConnecting
+              ? _buildConnectingState()
+              : _errorMessage != null
+              ? _buildErrorState()
+              : _buildMeetingUI(context),
+        ),
       ),
     );
   }
@@ -345,7 +396,7 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
           top: 0,
           left: 0,
           right: 0,
-          bottom: MeetingBottomControls.height + 6,
+          bottom: MeetingBottomControls.height,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             child: ParticipantGrid(
@@ -353,6 +404,65 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
               isMicOn: _isMicOn,
               isCameraOn: _isCameraOn,
               onShowAllParticipants: _showParticipantsSheet,
+            ),
+          ),
+        ),
+
+        // ─── Floating Top: Meeting Title Label (Stretched Circular) ───
+        Positioned(
+          top: 14,
+          left: 20,
+          right: 20,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? null
+                    : AppTheme.card(context).withValues(alpha: 0.88),
+                gradient: Theme.of(context).brightness == Brightness.dark
+                    ? const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFF222228),
+                          Color(0xFF141419),
+                          Color(0xFF0C0C10),
+                        ],
+                        stops: [0.0, 0.4, 1.0],
+                      )
+                    : null,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : AppTheme.divider(context).withValues(alpha: 0.3),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: Theme.of(context).brightness == Brightness.dark ? 0.5 : 0.2,
+                    ),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                _displayTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textPrimary(context),
+                  letterSpacing: 0.2,
+                ),
+              ),
             ),
           ),
         ),

@@ -15,87 +15,112 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: isDark ? AppTheme.surface(context) : const Color(0xFFF8F9FA),
       appBar: _buildAppBar(context),
-      body: Column(
-        children: [
-          Expanded(
-            child: Obx(() {
-              if (controller.isLoading.value && controller.messages.isEmpty) {
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: isDark ? AppTheme.pageGradient(context) : null,
+          color: isDark ? null : const Color(0xFFF8F9FA),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Obx(() {
+                if (controller.isLoading.value && controller.messages.isEmpty) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: AppTheme.accentPurple,
+                    ),
+                  );
+                }
+
+                if (controller.messages.isEmpty && !controller.isLoading.value) {
+                  return _buildEmptyState(context);
+                }
+
                 return Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.accentPurple,
-                  ),
-                );
-              }
-
-              if (controller.messages.isEmpty && !controller.isLoading.value) {
-                return _buildEmptyState(context);
-              }
-
-              return Center(
-                child: Container(
-                  constraints: const BoxConstraints(maxWidth: 860),
-                  child: RefreshIndicator(
-                    onRefresh: () => controller.fetchMessages(),
-                    color: AppTheme.accentPurple,
-                    backgroundColor: AppTheme.card(context),
-                    child: ListView.builder(
-                      controller: controller.scrollController,
-                      reverse: true,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      itemCount: controller.messages.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == controller.messages.length) {
-                          if (controller.isLoadingMore.value || controller.hasMore) {
-                            return Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppTheme.accentPurple,
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 860),
+                    child: RefreshIndicator(
+                      onRefresh: () => controller.fetchMessages(),
+                      color: AppTheme.accentPurple,
+                      backgroundColor: AppTheme.card(context),
+                      child: ListView.builder(
+                        controller: controller.scrollController,
+                        reverse: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        itemCount: controller.messages.length + 1,
+                        itemBuilder: (context, index) {
+                          if (index == controller.messages.length) {
+                            if (controller.isLoadingMore.value || controller.hasMore) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppTheme.accentPurple,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          } else {
-                            return ChatHistoryHeader(
-                              convo: controller.conversation,
-                              controller: controller,
-                            );
+                              );
+                            } else {
+                              return ChatHistoryHeader(
+                                convo: controller.conversation,
+                                controller: controller,
+                              );
+                            }
                           }
-                        }
 
-                        final message = controller.messages[index];
-                        final isMe = message.senderId == UserModel.instance.userId;
-                        return isMe
-                            ? SenderBubble(
-                                message: message,
-                                conversation: controller.conversation,
-                              )
-                            : ReceiverBubble(message: message);
-                      },
+                          final message = controller.messages[index];
+                          final isMe = message.senderId == UserModel.instance.userId;
+                          return isMe
+                              ? SenderBubble(
+                                  message: message,
+                                  conversation: controller.conversation,
+                                )
+                              : ReceiverBubble(message: message);
+                        },
+                      ),
                     ),
                   ),
-                ),
-              );
-            }),
-          ),
-          MessageInput(controller: controller),
-        ],
+                );
+              }),
+            ),
+            MessageInput(controller: controller),
+          ],
+        ),
       ),
     );
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final convo = controller.conversation;
     return AppBar(
-      backgroundColor: AppTheme.card(context),
+      backgroundColor: isDark ? null : AppTheme.card(context),
       elevation: 0,
+      flexibleSpace: isDark
+          ? Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF222228),
+                    Color(0xFF141419),
+                    Color(0xFF0C0C10),
+                  ],
+                  stops: [0.0, 0.4, 1.0],
+                ),
+              ),
+            )
+          : null,
       leading: IconButton(
         icon: Icon(
           Icons.arrow_back_ios_new_rounded,
@@ -151,7 +176,9 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
         preferredSize: const Size.fromHeight(1),
         child: Divider(
           height: 1,
-          color: AppTheme.divider(context).withValues(alpha: 0.5),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.16)
+              : AppTheme.divider(context).withValues(alpha: 0.5),
         ),
       ),
     );
@@ -288,17 +315,24 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
   }
 
   Widget _buildQuickMessageChip(BuildContext context, String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ActionChip(
       label: Text(
         text,
         style: TextStyle(
-          color: AppTheme.accentPurple,
+          color: isDark ? Colors.white : AppTheme.accentPurple,
           fontSize: 12,
           fontWeight: FontWeight.w500,
         ),
       ),
-      backgroundColor: AppTheme.accentPurple.withValues(alpha: 0.08),
-      side: BorderSide(color: AppTheme.accentPurple.withValues(alpha: 0.15)),
+      backgroundColor: isDark
+          ? const Color(0xFF1E1E26)
+          : AppTheme.accentPurple.withValues(alpha: 0.08),
+      side: BorderSide(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.18)
+            : AppTheme.accentPurple.withValues(alpha: 0.15),
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onPressed: () {
         controller.messageController.text = text;

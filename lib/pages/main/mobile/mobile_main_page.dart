@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +17,8 @@ class MobileMainPage extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: const AppHeader(),
       body: Obx(
@@ -31,64 +32,76 @@ class MobileMainPage extends GetView<MainController> {
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-          child: Container(
-            height: 72,
-            decoration: BoxDecoration(
-              color: AppTheme.card(context).withValues(alpha: 0.8),
-              borderRadius: BorderRadius.circular(36),
-              border: Border.all(
-                color: AppTheme.divider(context).withValues(alpha: 0.5),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.accentPurple.withValues(alpha: 0.15),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: isDark ? null : AppTheme.card(context),
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF222228),
+                    Color(0xFF121216),
+                    Color(0xFF09090C),
+                  ],
+                  stops: [0.0, 0.35, 1.0],
+                )
+              : null,
+          border: Border(
+            top: BorderSide(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : AppTheme.divider(context).withValues(alpha: 0.35),
+              width: 1,
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(36),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Obx(
-                    () => Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.groups_rounded,
-                          label: 'Team',
-                          index: 0,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.videocam_rounded,
-                          label: 'Meet',
-                          index: 1,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.calendar_month_rounded,
-                          label: 'Calendar',
-                          index: 2,
-                        ),
-                        _buildNavItem(
-                          context: context,
-                          icon: Icons.settings_rounded,
-                          label: 'Settings',
-                          index: 3,
-                        ),
-                      ],
-                    ),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.05),
+              blurRadius: isDark ? 14 : 8,
+              offset: const Offset(0, -2),
+            ),
+            if (isDark)
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.04),
+                blurRadius: 1,
+                offset: const Offset(0, -1),
+              ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            height: 58,
+            child: Obx(
+              () => Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    context: context,
+                    icon: Icons.groups_rounded,
+                    label: 'Team',
+                    index: 0,
                   ),
-                ),
+                  _buildNavItem(
+                    context: context,
+                    icon: Icons.videocam_rounded,
+                    label: 'Meet',
+                    index: 1,
+                  ),
+                  _buildNavItem(
+                    context: context,
+                    icon: Icons.calendar_month_rounded,
+                    label: 'Calendar',
+                    index: 2,
+                  ),
+                  _buildNavItem(
+                    context: context,
+                    icon: Icons.settings_rounded,
+                    label: 'Settings',
+                    index: 3,
+                  ),
+                ],
               ),
             ),
           ),
@@ -103,56 +116,49 @@ class MobileMainPage extends GetView<MainController> {
     required String label,
     required int index,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSelected = controller.currentIndex.value == index;
     final color = isSelected
         ? AppTheme.accentPurple
-        : AppTheme.textSecondary(context).withValues(alpha: 0.6);
+        : (isDark ? Colors.white70 : AppTheme.textSecondary(context));
 
-    return InkWell(
-      onTap: () => controller.changePage(index),
-      borderRadius: BorderRadius.circular(24),
-      splashColor: AppTheme.accentPurple.withValues(alpha: 0.1),
-      highlightColor: Colors.transparent,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 20 : 12,
-          vertical: 12,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.accentPurple.withValues(alpha: 0.15)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return ScaleTransition(scale: animation, child: child);
-              },
-              child: Icon(
-                icon,
-                key: ValueKey<bool>(isSelected),
-                color: color,
-                size: isSelected ? 26 : 24,
+    return Expanded(
+      child: InkWell(
+        onTap: () => controller.changePage(index),
+        splashColor: AppTheme.accentPurple.withValues(alpha: 0.1),
+        highlightColor: Colors.transparent,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.accentPurple.withValues(alpha: 0.15)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 22,
+                ),
               ),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
+              const SizedBox(height: 2),
               Text(
                 label,
                 style: TextStyle(
                   color: color,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 11,
                 ),
               ),
             ],
-          ],
+          ),
         ),
       ),
     );

@@ -94,7 +94,7 @@ class _VideoAreaState extends State<VideoArea> {
                             8.0,
                             8.0,
                             8.0,
-                            service.isControlsVisible.value ? 88.0 : 8.0,
+                            service.isControlsVisible.value ? 68.0 : 8.0,
                           ),
                           child: ParticipantGrid(
                             participants: service.participants.toList(),
@@ -148,7 +148,7 @@ class _VideoAreaState extends State<VideoArea> {
               }
 
               return Positioned(
-                bottom: shouldRotateControls ? null : 24,
+                bottom: shouldRotateControls ? null : 0,
                 left: shouldRotateControls ? 24 : 0,
                 right: shouldRotateControls ? null : 0,
                 child: controls,

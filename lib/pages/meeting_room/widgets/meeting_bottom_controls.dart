@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../services/meeting_service.dart';
 import '../../../theme/app_theme.dart';
+import 'participants_list_sheet.dart';
 
 /// Fixed bottom meeting controls with Mic, Camera, Screen Share, Team, and Leave actions.
 class MeetingBottomControls extends StatelessWidget {
-  static const double height = 90.0;
+  static const double height = 66.0;
 
   final bool isMicOn;
   final bool isCameraOn;
@@ -12,7 +14,7 @@ class MeetingBottomControls extends StatelessWidget {
   final VoidCallback onToggleMic;
   final VoidCallback onToggleCamera;
   final VoidCallback onToggleScreenShare;
-  final VoidCallback onShowParticipants;
+  final VoidCallback? onShowParticipants;
   final VoidCallback onLeaveMeeting;
 
   const MeetingBottomControls({
@@ -24,40 +26,66 @@ class MeetingBottomControls extends StatelessWidget {
     required this.onToggleMic,
     required this.onToggleCamera,
     required this.onToggleScreenShare,
-    required this.onShowParticipants,
+    this.onShowParticipants,
     required this.onLeaveMeeting,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox(
       height: height,
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: AppTheme.card(context).withValues(alpha: 0.96),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: AppTheme.divider(context).withValues(alpha: 0.3),
+          color: isDark ? null : AppTheme.card(context),
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF222228),
+                    Color(0xFF121216),
+                    Color(0xFF09090C),
+                  ],
+                  stops: [0.0, 0.35, 1.0],
+                )
+              : null,
+          border: Border(
+            top: BorderSide(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : AppTheme.divider(context).withValues(alpha: 0.3),
+              width: 1.0,
+            ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
+              color: Colors.black.withValues(alpha: isDark ? 0.7 : 0.1),
+              blurRadius: isDark ? 16 : 8,
+              offset: const Offset(0, -2),
             ),
+            if (isDark)
+              BoxShadow(
+                color: Colors.white.withValues(alpha: 0.04),
+                blurRadius: 1,
+                offset: const Offset(0, -1),
+              ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
+        child: SafeArea(
+          top: false,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
             ControlButton(
               icon: isMicOn ? Icons.mic_rounded : Icons.mic_off_rounded,
               label: isMicOn ? 'Mute' : 'Unmute',
               isActive: isMicOn,
               onTap: onToggleMic,
+              inactiveColor: isMicOn ? null : AppTheme.errorRed,
             ),
             ControlButton(
               icon: isCameraOn
@@ -66,6 +94,7 @@ class MeetingBottomControls extends StatelessWidget {
               label: 'Camera',
               isActive: isCameraOn,
               onTap: onToggleCamera,
+              inactiveColor: isCameraOn ? null : AppTheme.errorRed,
             ),
             ControlButton(
               icon: Icons.screen_share_rounded,
@@ -78,13 +107,25 @@ class MeetingBottomControls extends StatelessWidget {
               icon: Icons.groups_rounded,
               label: 'Team',
               isActive: false,
-              onTap: onShowParticipants,
+              onTap: () {
+                if (onShowParticipants != null) {
+                  onShowParticipants!();
+                } else {
+                  ParticipantsListSheet.show(
+                    context,
+                    participants: MeetingService.instance.participants.toList(),
+                    isMicOn: isMicOn,
+                    isCameraOn: isCameraOn,
+                  );
+                }
+              },
             ),
             LeaveButton(
               isLeaving: isLeaving,
               onLeave: onLeaveMeeting,
             ),
           ],
+        ),
         ),
       ),
     );
@@ -98,6 +139,7 @@ class ControlButton extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final Color? activeColor;
+  final Color? inactiveColor;
 
   const ControlButton({
     super.key,
@@ -106,11 +148,81 @@ class ControlButton extends StatelessWidget {
     required this.isActive,
     required this.onTap,
     this.activeColor,
+    this.inactiveColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = activeColor ?? AppTheme.textPrimary(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fallbackInactiveColor = isDark ? Colors.white70 : AppTheme.textSecondary(context);
+    final effectiveActiveColor = activeColor ?? AppTheme.accentPurple;
+    final effectiveInactiveColor = inactiveColor ?? fallbackInactiveColor;
+    final color = isActive ? effectiveActiveColor : effectiveInactiveColor;
+
+    final BoxDecoration buttonDecoration;
+    if (isDark) {
+      if (isActive) {
+        buttonDecoration = BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              effectiveActiveColor.withValues(alpha: 0.4),
+              effectiveActiveColor.withValues(alpha: 0.18),
+            ],
+          ),
+          border: Border.all(
+            color: effectiveActiveColor.withValues(alpha: 0.65),
+            width: 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: effectiveActiveColor.withValues(alpha: 0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        );
+      } else {
+        buttonDecoration = BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF2E2E36),
+              Color(0xFF18181F),
+              Color(0xFF0E0E12),
+            ],
+            stops: [0.0, 0.45, 1.0],
+          ),
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.22),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        );
+      }
+    } else {
+      buttonDecoration = BoxDecoration(
+        color: isActive
+            ? (activeColor ?? AppTheme.cardAlt(context)).withValues(alpha: 0.25)
+            : AppTheme.cardAlt(context),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive
+              ? color.withValues(alpha: 0.4)
+              : AppTheme.divider(context).withValues(alpha: 0.3),
+        ),
+      );
+    }
 
     return GestureDetector(
       onTap: onTap,
@@ -121,35 +233,23 @@ class ControlButton extends StatelessWidget {
         children: [
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: isActive
-                  ? (activeColor ?? AppTheme.cardAlt(context)).withValues(
-                      alpha: 0.25,
-                    )
-                  : AppTheme.cardAlt(context),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isActive
-                    ? color.withValues(alpha: 0.4)
-                    : AppTheme.divider(context).withValues(alpha: 0.3),
-              ),
-            ),
+            width: 38,
+            height: 38,
+            decoration: buttonDecoration,
             child: Icon(
               icon,
-              color: isActive ? color : AppTheme.textSecondary(context),
-              size: 20,
+              color: color,
+              size: 19,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               fontSize: 10,
               height: 1.1,
               fontWeight: FontWeight.w500,
-              color: AppTheme.textSecondary(context),
+              color: isDark ? Colors.white70 : AppTheme.textSecondary(context),
             ),
           ),
         ],
@@ -171,6 +271,8 @@ class LeaveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: isLeaving ? null : onLeave,
       behavior: HitTestBehavior.opaque,
@@ -179,24 +281,39 @@ class LeaveButton extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.errorRed,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFFF5757),
+                  Color(0xFFE53935),
+                  Color(0xFFC62828),
+                ],
+                stops: [0.0, 0.5, 1.0],
+              ),
+              border: isDark
+                  ? Border.all(
+                      color: Colors.white.withValues(alpha: 0.3),
+                      width: 1.0,
+                    )
+                  : null,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.errorRed.withValues(alpha: 0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
+                  color: const Color(0xFFD32F2F).withValues(alpha: isDark ? 0.5 : 0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
             child: isLeaving
                 ? const Center(
                     child: SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
                         color: Colors.white,
@@ -206,10 +323,10 @@ class LeaveButton extends StatelessWidget {
                 : const Icon(
                     Icons.call_end_rounded,
                     color: Colors.white,
-                    size: 20,
+                    size: 19,
                   ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             'Leave',
             style: TextStyle(

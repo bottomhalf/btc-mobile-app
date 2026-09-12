@@ -64,13 +64,7 @@ class MeetPage extends GetView<MeetController> {
           backgroundColor: Colors.transparent,
           body: Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: Theme.of(context).brightness == Brightness.dark
-                    ? const [Color(0xFF131224), Color(0xFF1B1A2E)]
-                    : const [Color(0xFFF3F5FA), Color(0xFFE8ECF5)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              gradient: AppTheme.pageGradient(context),
             ),
             child: Stack(
               children: [
@@ -226,16 +220,22 @@ class MeetPage extends GetView<MeetController> {
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const Spacer(),
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'See all',
-              style: TextStyle(
-                color: AppTheme.accentPurple,
-                fontWeight: FontWeight.w600,
+          Obx(() {
+            final total = controller.allMeetings.length;
+            if (total <= 6) return const SizedBox.shrink();
+            return TextButton(
+              onPressed: () {
+                controller.showAllMeetings.toggle();
+              },
+              child: Text(
+                controller.showAllMeetings.value ? 'Show less' : 'See all ($total)',
+                style: TextStyle(
+                  color: AppTheme.accentPurple,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

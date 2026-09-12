@@ -53,6 +53,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     required String subtitle,
     required IconData icon,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = UserModel.instance;
     final initials = user.firstName.isNotEmpty
         ? (user.firstName[0] + (user.lastName.isNotEmpty ? user.lastName[0] : '')).toUpperCase()
@@ -60,13 +61,36 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.card(context).withValues(alpha: 0.8),
+        color: isDark ? null : AppTheme.card(context).withValues(alpha: 0.8),
+        gradient: isDark
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF222228),
+                  Color(0xFF141419),
+                  Color(0xFF0C0C10),
+                ],
+                stops: [0.0, 0.4, 1.0],
+              )
+            : null,
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.divider(context).withValues(alpha: 0.5),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.16)
+                : AppTheme.divider(context).withValues(alpha: 0.5),
             width: 1,
           ),
         ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: ClipRect(
         child: BackdropFilter(
@@ -169,6 +193,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   }
 
   Widget _buildDefaultHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final user = UserModel.instance;
     final initials = user.firstName.isNotEmpty
         ? (user.firstName[0] + (user.lastName.isNotEmpty ? user.lastName[0] : '')).toUpperCase()
@@ -176,13 +201,36 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.card(context).withValues(alpha: 0.8),
+        color: isDark ? null : AppTheme.card(context).withValues(alpha: 0.8),
+        gradient: isDark
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF222228),
+                  Color(0xFF141419),
+                  Color(0xFF0C0C10),
+                ],
+                stops: [0.0, 0.4, 1.0],
+              )
+            : null,
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.divider(context).withValues(alpha: 0.5),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.16)
+                : AppTheme.divider(context).withValues(alpha: 0.5),
             width: 1,
           ),
         ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.5),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
       ),
       child: ClipRect(
         child: BackdropFilter(

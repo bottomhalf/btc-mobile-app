@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import '../../../../shared/widgets/app_avatar.dart';
 import '../../../../theme/app_theme.dart';
 import 'schedule_meeting_controller.dart';
 
@@ -58,7 +59,7 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
       child: ListView(
         padding: const EdgeInsets.all(24),
         children: [
-          _buildComingSoonIllustration(context),
+          _buildScheduleHeader(context),
           // Title field
           Text(
             'Meeting Title',
@@ -85,76 +86,100 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
           ),
           const SizedBox(height: 20),
 
-          // Date and Time Pickers Row
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // All Day Switch
+          Obx(() => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.cardAlt(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppTheme.divider(context).withValues(alpha: 0.5),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
+                    Icon(Icons.today_rounded, size: 20, color: AppTheme.accentPurple),
+                    const SizedBox(width: 12),
                     Text(
-                      'Date',
+                      'All-day Event',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: AppTheme.textPrimary(context),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    InkWell(
-                      onTap: () => controller.selectDate(context),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        decoration: BoxDecoration(
-                          color: AppTheme.cardAlt(context),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppTheme.divider(context).withValues(alpha: 0.5),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today_rounded, size: 18, color: AppTheme.accentPurple),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Obx(() {
-                                final date = controller.selectedDate.value;
-                                return Text(
-                                  '${date.day}/${date.month}/${date.year}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textPrimary(context),
-                                  ),
-                                );
-                              }),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 16),
+                Switch.adaptive(
+                  value: controller.isAllDay.value,
+                  activeTrackColor: AppTheme.accentPurple,
+                  activeThumbColor: Colors.white,
+                  onChanged: controller.toggleAllDay,
+                ),
+              ],
+            ),
+          )),
+          const SizedBox(height: 20),
+
+          // Starts Row (Date & Time)
+          Text(
+            'Starts',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Time',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.textPrimary(context),
+                child: InkWell(
+                  onTap: () => controller.selectStartDate(context),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardAlt(context),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppTheme.divider(context).withValues(alpha: 0.5),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 18, color: AppTheme.accentPurple),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Obx(() {
+                            final date = controller.selectedStartDate.value;
+                            return Text(
+                              '${date.day}/${date.month}/${date.year}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textPrimary(context),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Obx(() {
+                if (controller.isAllDay.value) return const SizedBox.shrink();
+                return Row(
+                  children: [
+                    const SizedBox(width: 12),
                     InkWell(
-                      onTap: () => controller.selectTime(context),
+                      onTap: () => controller.selectStartTime(context),
                       borderRadius: BorderRadius.circular(14),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
                           color: AppTheme.cardAlt(context),
                           borderRadius: BorderRadius.circular(14),
@@ -165,31 +190,141 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
                         child: Row(
                           children: [
                             Icon(Icons.access_time_rounded, size: 18, color: AppTheme.accentPurple),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Obx(() {
-                                final time = controller.selectedTime.value;
-                                return Text(
-                                  time.format(context),
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppTheme.textPrimary(context),
-                                  ),
-                                );
-                              }),
+                            const SizedBox(width: 8),
+                            Text(
+                              controller.selectedStartTime.value.format(context),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textPrimary(context),
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
                   ],
-                ),
-              ),
+                );
+              }),
             ],
           ),
           const SizedBox(height: 20),
 
-          // Duration picker dropdown
+          // Ends Row (Date & Time)
+          Text(
+            'Ends',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () => controller.selectEndDate(context),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardAlt(context),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: AppTheme.divider(context).withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 18, color: AppTheme.accentPurple),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Obx(() {
+                            final date = controller.selectedEndDate.value;
+                            return Text(
+                              '${date.day}/${date.month}/${date.year}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textPrimary(context),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Obx(() {
+                if (controller.isAllDay.value) return const SizedBox.shrink();
+                return Row(
+                  children: [
+                    const SizedBox(width: 12),
+                    InkWell(
+                      onTap: () => controller.selectEndTime(context),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardAlt(context),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppTheme.divider(context).withValues(alpha: 0.5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.access_time_rounded, size: 18, color: AppTheme.accentPurple),
+                            const SizedBox(width: 8),
+                            Text(
+                              controller.selectedEndTime.value.format(context),
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppTheme.textPrimary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Repeat dropdown
+          Text(
+            'Repeat',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppTheme.textPrimary(context),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Obx(() => DropdownButtonFormField<int>(
+            isExpanded: true,
+            initialValue: controller.repeatType.value,
+            dropdownColor: AppTheme.card(context),
+            style: TextStyle(color: AppTheme.textPrimary(context)),
+            decoration: InputDecoration(
+              prefixIcon: Icon(Icons.repeat_rounded, color: AppTheme.accentPurple),
+            ),
+            items: const [
+              DropdownMenuItem(value: 0, child: Text('Does not repeat', overflow: TextOverflow.ellipsis)),
+              DropdownMenuItem(value: 1, child: Text('Daily', overflow: TextOverflow.ellipsis)),
+              DropdownMenuItem(value: 2, child: Text('Weekly', overflow: TextOverflow.ellipsis)),
+              DropdownMenuItem(value: 3, child: Text('Monthly', overflow: TextOverflow.ellipsis)),
+            ],
+            onChanged: (val) {
+              if (val != null) controller.repeatType.value = val;
+            },
+          )),
+          const SizedBox(height: 20),
+
+          // Duration dropdown
           Text(
             'Duration',
             style: TextStyle(
@@ -199,8 +334,11 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
             ),
           ),
           const SizedBox(height: 8),
-          DropdownButtonFormField<int>(
-            initialValue: controller.selectedDuration.value,
+          Obx(() => DropdownButtonFormField<int>(
+            isExpanded: true,
+            initialValue: [900, 1800, 2700, 3600, 7200, 10800].contains(controller.durationInSecond.value)
+                ? controller.durationInSecond.value
+                : 3600,
             dropdownColor: AppTheme.card(context),
             style: TextStyle(color: AppTheme.textPrimary(context)),
             decoration: InputDecoration(
@@ -215,9 +353,9 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
               DropdownMenuItem(value: 10800, child: Text('3 hours')),
             ],
             onChanged: (val) {
-              if (val != null) controller.selectedDuration.value = val;
+              if (val != null) controller.setDuration(val);
             },
-          ),
+          )),
           const SizedBox(height: 20),
 
           // Meeting Password field with refresh/regenerate button
@@ -272,22 +410,54 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
               ),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 20),
 
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: null, // Disabled: Coming soon
-              child: const Text(
-                'Schedule Meeting (Coming Soon)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+          // Participants
+          _buildParticipantsSection(context),
+          const SizedBox(height: 36),
+
+          // Schedule Meeting Button
+          Obx(() {
+            final isLoading = controller.isLoading.value;
+            return SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: isLoading ? null : () => controller.saveMeeting(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.accentPurple,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 2,
                 ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.calendar_month_rounded, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            'Schedule Meeting',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
@@ -480,93 +650,376 @@ Password: ${meeting.meetingPassword}
     return '${hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')} $period';
   }
 
-  Widget _buildComingSoonIllustration(BuildContext context) {
+  Widget _buildScheduleHeader(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.card(context),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.accentPurple.withValues(alpha: 0.12),
+            AppTheme.accentPurple.withValues(alpha: 0.04),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppTheme.divider(context).withValues(alpha: 0.3),
+          color: AppTheme.accentPurple.withValues(alpha: 0.25),
         ),
       ),
-      child: Column(
+      child: Row(
         children: [
-          // Graphic container
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(
-                width: 90,
-                height: 90,
-                decoration: BoxDecoration(
-                  color: AppTheme.accentPurple.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
               ),
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.accentPurple.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.accentPurple.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
-                child: const Icon(
-                  Icons.rocket_launch_rounded,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 5,
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: Colors.amber,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppTheme.card(context), width: 2),
-                  ),
-                  child: const Icon(
-                    Icons.hourglass_empty_rounded,
-                    size: 12,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Schedule Feature Underway',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary(context),
+              ],
+            ),
+            child: const Icon(
+              Icons.calendar_month_rounded,
+              color: Colors.white,
+              size: 26,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'This feature is right now not available. We are currently integrating Calendars to let you sync scheduled events automatically! Very soon it will be going to come up.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textSecondary(context),
-              height: 1.4,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Schedule a Video Meeting',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary(context),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Plan your session, invite team members, and generate an instant join link.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary(context),
+                    height: 1.3,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildParticipantsSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Obx(() {
+              final count = controller.selectedParticipants.length;
+              return Row(
+                children: [
+                  Text(
+                    'Participants',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textPrimary(context),
+                    ),
+                  ),
+                  if (count > 0) ...[
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentPurple.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '$count',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.accentPurple,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            }),
+            TextButton.icon(
+              onPressed: () => _openParticipantsPicker(context),
+              icon: Icon(Icons.person_add_alt_1_rounded, size: 16, color: AppTheme.accentPurple),
+              label: Text(
+                'Add Invitees',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.accentPurple,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Obx(() {
+          final participants = controller.selectedParticipants;
+          if (participants.isEmpty) {
+            return InkWell(
+              onTap: () => _openParticipantsPicker(context),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardAlt(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppTheme.divider(context).withValues(alpha: 0.5),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.group_add_outlined, size: 20, color: AppTheme.accentPurple),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Invite participants to this meeting (optional)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary(context),
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: AppTheme.textSecondary(context),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.cardAlt(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: AppTheme.divider(context).withValues(alpha: 0.5),
+              ),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: participants.map((p) {
+                final name = '${p.firstName} ${p.lastName ?? ''}'.trim();
+                final displayName = name.isNotEmpty ? name : p.email;
+                return Chip(
+                  backgroundColor: AppTheme.card(context),
+                  side: BorderSide(
+                    color: AppTheme.accentPurple.withValues(alpha: 0.3),
+                  ),
+                  avatar: AppAvatar(
+                    name: displayName,
+                    imageUrl: p.avatar,
+                    size: 24,
+                    fontSize: 10,
+                  ),
+                  label: Text(
+                    displayName,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.textPrimary(context),
+                    ),
+                  ),
+                  deleteIcon: const Icon(Icons.close_rounded, size: 14),
+                  deleteIconColor: AppTheme.textSecondary(context),
+                  onDeleted: () => controller.removeParticipant(p.userId),
+                );
+              }).toList(),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  void _openParticipantsPicker(BuildContext context) {
+    final availableContacts = controller.getAvailableContacts();
+    final searchQuery = ''.obs;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.card(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (_, scrollController) {
+            return Column(
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.divider(context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                // Header
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Add Participants',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary(context),
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: Text(
+                          'Done',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.accentPurple,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: TextField(
+                    onChanged: (val) => searchQuery.value = val,
+                    style: TextStyle(color: AppTheme.textPrimary(context)),
+                    decoration: InputDecoration(
+                      hintText: 'Search contacts...',
+                      prefixIcon: Icon(Icons.search_rounded, color: AppTheme.accentPurple),
+                      filled: true,
+                      fillColor: AppTheme.cardAlt(context),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                const Divider(),
+                // Contacts List
+                Expanded(
+                  child: Obx(() {
+                    final query = searchQuery.value.trim().toLowerCase();
+                    final filtered = availableContacts.where((p) {
+                      final name = '${p.firstName} ${p.lastName ?? ''}'.toLowerCase();
+                      final email = p.email.toLowerCase();
+                      return name.contains(query) || email.contains(query);
+                    }).toList();
+
+                    if (filtered.isEmpty) {
+                      return Center(
+                        child: Text(
+                          availableContacts.isEmpty
+                              ? 'No contacts found'
+                              : 'No matching contacts',
+                          style: TextStyle(color: AppTheme.textSecondary(context)),
+                        ),
+                      );
+                    }
+
+                    return ListView.builder(
+                      controller: scrollController,
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        final participant = filtered[index];
+                        final fullName = '${participant.firstName} ${participant.lastName ?? ''}'.trim();
+                        final displayName = fullName.isNotEmpty ? fullName : participant.email;
+
+                        return Obx(() {
+                          final isSelected = controller.isParticipantSelected(participant.userId);
+                          return ListTile(
+                            leading: AppAvatar(
+                              name: displayName,
+                              imageUrl: participant.avatar,
+                              size: 40,
+                            ),
+                            title: Text(
+                              displayName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.textPrimary(context),
+                              ),
+                            ),
+                            subtitle: participant.email.isNotEmpty
+                                ? Text(
+                                    participant.email,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppTheme.textSecondary(context),
+                                    ),
+                                  )
+                                : null,
+                            trailing: Checkbox(
+                              value: isSelected,
+                              activeColor: AppTheme.accentPurple,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              onChanged: (_) => controller.toggleParticipant(participant),
+                            ),
+                            onTap: () => controller.toggleParticipant(participant),
+                          );
+                        });
+                      },
+                    );
+                  }),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }

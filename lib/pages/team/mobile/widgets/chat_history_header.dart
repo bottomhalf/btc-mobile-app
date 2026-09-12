@@ -39,6 +39,7 @@ class ChatHistoryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isGroup = convo.type.toLowerCase() == 'group';
     final currentUserId = UserModel.instance.userId;
 
@@ -53,16 +54,30 @@ class ChatHistoryHeader extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? null : Colors.white,
+          gradient: isDark
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF22222A),
+                    Color(0xFF131318),
+                    Color(0xFF0E0E12),
+                  ],
+                  stops: [0.0, 0.45, 1.0],
+                )
+              : null,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: const Color(0xFFE5E7EB),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.16)
+                : const Color(0xFFE5E7EB),
             width: 1.2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 10,
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.03),
+              blurRadius: isDark ? 14 : 10,
               offset: const Offset(0, 3),
             ),
           ],
@@ -75,6 +90,7 @@ class ChatHistoryHeader extends StatelessWidget {
   }
 
   Widget _buildDirectChatCard(BuildContext context, Participant? other) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final name = other != null && other.firstName.isNotEmpty
         ? '${other.firstName} ${other.lastName ?? ''}'.trim()
         : (convo.title.isNotEmpty ? convo.title : 'Direct Message');
@@ -96,7 +112,12 @@ class ChatHistoryHeader extends StatelessWidget {
               name: name,
               size: 64,
               fontSize: 22,
-              border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : const Color(0xFFE5E7EB),
+                width: 2,
+              ),
             ),
             Container(
               width: 15,
@@ -106,7 +127,10 @@ class ChatHistoryHeader extends StatelessWidget {
                     ? const Color(0xFF22C55E)
                     : const Color(0xFF9CA3AF),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF131318) : Colors.white,
+                  width: 2,
+                ),
               ),
             ),
           ],
@@ -115,10 +139,10 @@ class ChatHistoryHeader extends StatelessWidget {
 
         Text(
           name,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
+            color: isDark ? Colors.white : const Color(0xFF1F2937),
             letterSpacing: -0.2,
           ),
           textAlign: TextAlign.center,
@@ -131,21 +155,26 @@ class ChatHistoryHeader extends StatelessWidget {
             if (email.isNotEmpty) ...[
               Text(
                 email,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF6B7280),
+                  color: isDark ? Colors.white70 : const Color(0xFF6B7280),
                 ),
               ),
               const SizedBox(width: 6),
-              const Text('•', style: TextStyle(color: Color(0xFFD1D5DB))),
+              Text(
+                '•',
+                style: TextStyle(
+                  color: isDark ? Colors.white38 : const Color(0xFFD1D5DB),
+                ),
+              ),
               const SizedBox(width: 6),
             ],
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? const Color(0xFFDCFCE7)
-                    : const Color(0xFFF3F4F6),
+                    ? (isDark ? const Color(0xFF14532D) : const Color(0xFFDCFCE7))
+                    : (isDark ? const Color(0xFF1E1E26) : const Color(0xFFF3F4F6)),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -168,8 +197,8 @@ class ChatHistoryHeader extends StatelessWidget {
                       fontSize: 10.5,
                       fontWeight: FontWeight.w600,
                       color: isOnline
-                          ? const Color(0xFF16A34A)
-                          : const Color(0xFF6B7280),
+                          ? (isDark ? const Color(0xFF4ADE80) : const Color(0xFF16A34A))
+                          : (isDark ? Colors.white70 : const Color(0xFF6B7280)),
                     ),
                   ),
                 ],
@@ -179,15 +208,20 @@ class ChatHistoryHeader extends StatelessWidget {
         ),
 
         const SizedBox(height: 12),
-        const Divider(height: 1, color: Color(0xFFF3F4F6)),
+        Divider(
+          height: 1,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFF3F4F6),
+        ),
         const SizedBox(height: 12),
 
         Text(
           'This is the beginning of your 1-on-1 message history with $name. Direct messages sent here are private.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: Color(0xFF4B5563),
+            color: isDark ? Colors.white70 : const Color(0xFF4B5563),
             height: 1.4,
           ),
         ),
@@ -199,9 +233,9 @@ class ChatHistoryHeader extends StatelessWidget {
           runSpacing: 6,
           alignment: WrapAlignment.center,
           children: [
-            _buildQuickChip('👋 Say Hello!'),
-            _buildQuickChip('📅 Quick meeting?'),
-            _buildQuickChip('🚀 Ready to start!'),
+            _buildQuickChip(context, '👋 Say Hello!'),
+            _buildQuickChip(context, '📅 Quick meeting?'),
+            _buildQuickChip(context, '🚀 Ready to start!'),
           ],
         ),
       ],
@@ -209,6 +243,7 @@ class ChatHistoryHeader extends StatelessWidget {
   }
 
   Widget _buildGroupCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final title = convo.title.isNotEmpty ? convo.title : 'Group Space';
     final memberCount = convo.memberCount > 0
         ? convo.memberCount
@@ -242,16 +277,21 @@ class ChatHistoryHeader extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           backgroundColor: const Color(0xFFFB7185),
           fontSize: 22,
-          border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.2)
+                : const Color(0xFFE5E7EB),
+            width: 2,
+          ),
         ),
         const SizedBox(height: 12),
 
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17.5,
             fontWeight: FontWeight.w700,
-            color: Color(0xFF1F2937),
+            color: isDark ? Colors.white : const Color(0xFF1F2937),
             letterSpacing: -0.2,
           ),
           textAlign: TextAlign.center,
@@ -264,14 +304,20 @@ class ChatHistoryHeader extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
+                color: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
+                border: Border.all(
+                  color: isDark
+                      ? const Color(0xFF38BDF8).withValues(alpha: 0.4)
+                      : const Color(0xFFBFDBFE),
+                ),
               ),
-              child: const Text(
+              child: Text(
                 'GROUP SPACE',
                 style: TextStyle(
-                  color: Color(0xFF1D4ED8),
+                  color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF1D4ED8),
                   fontSize: 9.5,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
@@ -281,10 +327,10 @@ class ChatHistoryHeader extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               '$memberCount members',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF6B7280),
+                color: isDark ? Colors.white70 : const Color(0xFF6B7280),
               ),
             ),
           ],
@@ -297,28 +343,36 @@ class ChatHistoryHeader extends StatelessWidget {
               ? convo.description!
               : 'Welcome to $title! Everyone in this space can collaborate and share updates.',
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: Color(0xFF4B5563),
+            color: isDark ? Colors.white70 : const Color(0xFF4B5563),
             height: 1.4,
           ),
         ),
 
         const SizedBox(height: 12),
-        const Divider(height: 1, color: Color(0xFFF3F4F6)),
+        Divider(
+          height: 1,
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.12)
+              : const Color(0xFFF3F4F6),
+        ),
         const SizedBox(height: 12),
 
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.info_outline_rounded,
-                size: 13, color: Color(0xFF9CA3AF)),
+            Icon(
+              Icons.info_outline_rounded,
+              size: 13,
+              color: isDark ? Colors.white60 : const Color(0xFF9CA3AF),
+            ),
             const SizedBox(width: 5),
             Text(
               'Created by $creatorName on $formattedDate',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: Color(0xFF6B7280),
+                color: isDark ? Colors.white70 : const Color(0xFF6B7280),
               ),
             ),
           ],
@@ -331,31 +385,37 @@ class ChatHistoryHeader extends StatelessWidget {
           runSpacing: 6,
           alignment: WrapAlignment.center,
           children: [
-            _buildQuickChip('👋 Hey everyone!'),
-            _buildQuickChip('📋 Today\'s agenda?'),
-            _buildQuickChip('🚀 Ready to start!'),
+            _buildQuickChip(context, '👋 Hey everyone!'),
+            _buildQuickChip(context, '📋 Today\'s agenda?'),
+            _buildQuickChip(context, '🚀 Ready to start!'),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildQuickChip(String text) {
+  Widget _buildQuickChip(BuildContext context, String text) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () => _onStarterTapped(text),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
         decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
+          color: isDark ? const Color(0xFF1E1E26) : const Color(0xFFF9FAFB),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.18)
+                : const Color(0xFFE5E7EB),
+          ),
         ),
         child: Text(
           text,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11.5,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+            color: isDark ? Colors.white : const Color(0xFF374151),
           ),
         ),
       ),

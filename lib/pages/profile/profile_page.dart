@@ -44,13 +44,7 @@ class ProfilePage extends GetView<ProfileController> {
       ),
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: Theme.of(context).brightness == Brightness.dark
-                ? const [Color(0xFF131224), Color(0xFF1B1A2E)]
-                : const [Color(0xFFF3F5FA), Color(0xFFE8ECF5)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
+          gradient: AppTheme.pageGradient(context),
         ),
         child: ListView(
           padding: const EdgeInsets.all(24),

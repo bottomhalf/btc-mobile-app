@@ -43,6 +43,15 @@ class MeetingService extends GetxService {
 
   final participantCount = 1.obs;
   final participants = <Participant>[].obs;
+  final isParticipantsSheetVisible = false.obs;
+
+  void toggleParticipantsSheet() {
+    isParticipantsSheetVisible.toggle();
+  }
+
+  void hideParticipantsSheet() {
+    isParticipantsSheetVisible.value = false;
+  }
 
   // ─── Join / Leave ──────────────────────────────────────────────
 
@@ -160,6 +169,7 @@ class MeetingService extends GetxService {
     activeScreenShareTrack.value = null;
     activeVideoTrack.value = null;
     participantCount.value = 1;
+    isParticipantsSheetVisible.value = false;
     _meetingName = '';
   }
 

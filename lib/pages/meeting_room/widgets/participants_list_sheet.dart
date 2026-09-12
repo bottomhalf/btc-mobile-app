@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:livekit_client/livekit_client.dart';
+import '../../../services/meeting_service.dart';
 import '../../../theme/app_theme.dart';
 
 /// Modal bottom sheet listing all participants with status details.
@@ -7,12 +8,14 @@ class ParticipantsListSheet extends StatelessWidget {
   final List<Participant> participants;
   final bool isMicOn;
   final bool isCameraOn;
+  final VoidCallback? onClose;
 
   const ParticipantsListSheet({
     super.key,
     required this.participants,
     required this.isMicOn,
     required this.isCameraOn,
+    this.onClose,
   });
 
   /// Helper to display the sheet.
@@ -21,101 +24,139 @@ class ParticipantsListSheet extends StatelessWidget {
     required List<Participant> participants,
     required bool isMicOn,
     required bool isCameraOn,
+    VoidCallback? onClose,
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.card(context),
+      backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
       builder: (bottomSheetContext) => ParticipantsListSheet(
         participants: participants,
         isMicOn: isMicOn,
         isCameraOn: isCameraOn,
+        onClose: onClose,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.35,
-      maxChildSize: 0.85,
-      expand: false,
-      builder: (sheetContext, scrollController) {
-        return Column(
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppTheme.divider(sheetContext),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.groups_rounded,
-                        color: AppTheme.accentPurple,
-                        size: 22,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Participants (${participants.length})',
-                        style: Theme.of(sheetContext)
-                            .textTheme
-                            .titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded, size: 20),
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
+    final effectiveParticipants = participants.isNotEmpty
+        ? participants
+        : (MeetingService.instance.isInMeeting.value
+            ? MeetingService.instance.participants.toList()
+            : <Participant>[]);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color: isDark ? null : AppTheme.card(context),
+        gradient: isDark
+            ? const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFF222228),
+                  Color(0xFF141419),
+                  Color(0xFF0C0C10),
                 ],
+                stops: [0.0, 0.25, 1.0],
+              )
+            : null,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.18)
+              : AppTheme.divider(context).withValues(alpha: 0.3),
+        ),
+        boxShadow: isDark
+            ? [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                ),
+              ]
+            : null,
+      ),
+      child: Column(
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.divider(context),
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Divider(
-              height: 1,
-              color: AppTheme.divider(sheetContext).withValues(alpha: 0.3),
+          ),
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.groups_rounded,
+                      color: AppTheme.accentPurple,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Participants (${effectiveParticipants.length})',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                  onPressed: () {
+                    if (onClose != null) {
+                      onClose!();
+                    } else if (Navigator.of(context).canPop()) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+                ),
+              ],
             ),
-            // Participant list
-            Expanded(
-              child: participants.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No participants',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary(sheetContext),
-                        ),
+          ),
+          Divider(
+            height: 1,
+            color: AppTheme.divider(context).withValues(alpha: 0.3),
+          ),
+          // Participant list
+          Expanded(
+            child: effectiveParticipants.isEmpty
+                ? Center(
+                    child: Text(
+                      'No participants',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary(context),
                       ),
-                    )
-                  : ListView.separated(
-                      controller: scrollController,
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      itemCount: participants.length,
-                      separatorBuilder: (_, _) => Divider(
-                        height: 1,
-                        indent: 68,
-                        color: AppTheme.divider(sheetContext)
-                            .withValues(alpha: 0.3),
-                      ),
+                    ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: effectiveParticipants.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      indent: 68,
+                      color: AppTheme.divider(context)
+                          .withValues(alpha: 0.3),
+                    ),
                       itemBuilder: (itemCtx, index) {
-                        final p = participants[index];
+                        final p = effectiveParticipants[index];
                         final isLocal = p is LocalParticipant;
                         String name =
                             p.identity.isNotEmpty ? p.identity : 'User';
@@ -240,7 +281,7 @@ class ParticipantsListSheet extends StatelessWidget {
                                     : Icons.videocam_off_rounded,
                                 color: isCamOn
                                     ? AppTheme.accentPurple
-                                    : AppTheme.textSecondary(sheetContext),
+                                    : AppTheme.textSecondary(context),
                                 size: 18,
                               ),
                             ],
@@ -250,8 +291,7 @@ class ParticipantsListSheet extends StatelessWidget {
                     ),
             ),
           ],
-        );
-      },
-    );
+        ),
+      );
   }
 }

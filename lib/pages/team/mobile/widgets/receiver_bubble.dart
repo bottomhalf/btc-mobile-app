@@ -33,6 +33,7 @@ class _ReceiverBubbleState extends State<ReceiverBubble> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final senderName = chatService.getParticipantName(
       widget.message.conversationId,
       widget.message.senderId,
@@ -42,7 +43,7 @@ class _ReceiverBubbleState extends State<ReceiverBubble> {
       widget.message.senderId,
     );
     final textStyle = TextStyle(
-      color: AppTheme.textPrimary(context),
+      color: isDark ? Colors.white : AppTheme.textPrimary(context),
       fontSize: 14,
     );
 
@@ -70,17 +71,35 @@ class _ReceiverBubbleState extends State<ReceiverBubble> {
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppTheme.card(context),
+                color: isDark ? null : AppTheme.card(context),
+                gradient: isDark
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFF22222A),
+                          Color(0xFF141418),
+                          Color(0xFF0E0E12),
+                        ],
+                        stops: [0.0, 0.45, 1.0],
+                      )
+                    : null,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                   bottomLeft: Radius.circular(4),
                   bottomRight: Radius.circular(16),
                 ),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.16)
+                      : AppTheme.divider(context).withValues(alpha: 0.3),
+                  width: 1,
+                ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.03),
+                    blurRadius: isDark ? 8 : 4,
                     offset: const Offset(0, 2),
                   ),
                 ],

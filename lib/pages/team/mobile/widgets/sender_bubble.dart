@@ -32,10 +32,11 @@ class _SenderBubbleState extends State<SenderBubble> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final status = widget.message.status;
     final isSeen = status == 3;
-    final textStyle = const TextStyle(
-      color: Color(0xFF2C2738), // Dark purple for high contrast readability on light bg
+    final textStyle = TextStyle(
+      color: isDark ? Colors.white : const Color(0xFF2C2738),
       fontSize: 14,
     );
 
@@ -60,17 +61,33 @@ class _SenderBubbleState extends State<SenderBubble> {
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEFE8F8), // Light lavender background
+                    color: isDark ? null : const Color(0xFFEFE8F8),
+                    gradient: isDark
+                        ? const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color(0xFF4C4382),
+                              Color(0xFF322A5E),
+                            ],
+                          )
+                        : null,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
                       topRight: Radius.circular(16),
                       bottomLeft: Radius.circular(16),
                       bottomRight: Radius.circular(4),
                     ),
+                    border: isDark
+                        ? Border.all(
+                            color: const Color(0xFF6B60A8).withValues(alpha: 0.4),
+                            width: 1.0,
+                          )
+                        : null,
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 4,
+                        color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.03),
+                        blurRadius: isDark ? 6 : 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
@@ -128,14 +145,14 @@ class _SenderBubbleState extends State<SenderBubble> {
                         children: [
                           Text(
                             _formatTime(widget.message.createdAt),
-                            style: const TextStyle(
-                              color: Colors.black54, // Readable dark grey on light bg
+                            style: TextStyle(
+                              color: isDark ? Colors.white70 : Colors.black54,
                               fontSize: 10,
                             ),
                           ),
                           if (!isSeen) ...[
                             const SizedBox(width: 4),
-                            _buildInsideStatusIndicator(),
+                            _buildInsideStatusIndicator(context),
                           ],
                         ],
                       ),
@@ -157,15 +174,17 @@ class _SenderBubbleState extends State<SenderBubble> {
     );
   }
 
-  Widget _buildInsideStatusIndicator() {
+  Widget _buildInsideStatusIndicator(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final statusColor = isDark ? Colors.white70 : const Color(0xFF6B5F88);
     final status = widget.message.status;
 
     // Status 0: Pending/Local -> Show "sending..." text
     if (status == 0) {
-      return const Text(
+      return Text(
         'sending...',
         style: TextStyle(
-          color: Color(0xFF6B5F88),
+          color: statusColor,
           fontSize: 10,
           fontStyle: FontStyle.italic,
         ),
@@ -174,27 +193,27 @@ class _SenderBubbleState extends State<SenderBubble> {
 
     // Status 1: Delivered -> Single check icon
     if (status == 1) {
-      return const Icon(
+      return Icon(
         Icons.check,
         size: 13,
-        color: Color(0xFF6B5F88),
+        color: statusColor,
       );
     }
 
     // Status 2: Received/Server -> Double check icon
     if (status == 2) {
-      return const Icon(
+      return Icon(
         Icons.done_all,
         size: 13,
-        color: Color(0xFF6B5F88),
+        color: statusColor,
       );
     }
 
     // Fallback: single check
-    return const Icon(
+    return Icon(
       Icons.check,
       size: 13,
-      color: Color(0xFF6B5F88),
+      color: statusColor,
     );
   }
 

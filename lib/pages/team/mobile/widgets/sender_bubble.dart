@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:conference/models/conversation.dart';
 import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter/material.dart';
@@ -38,20 +39,24 @@ class _SenderBubbleState extends State<SenderBubble> {
       fontSize: 14,
     );
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bubbleMaxWidth = math.min(screenWidth * 0.75, 520.0);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end, // Aligned to the right side of the screen
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (isSeen) const SizedBox(width: 24), // Safety margin to prevent left-overlapping avatar from clipping
+          const SizedBox(width: 40), // Left gap keeps bubble in middle-right
+          if (isSeen) const SizedBox(width: 20), // Safety margin to prevent left-overlapping avatar from clipping
           Flexible(
             child: Stack(
               clipBehavior: Clip.none,
               children: [
                 Container(
                   constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.95 - 48, // Max upto 95% of screen width
+                    maxWidth: bubbleMaxWidth,
                   ),
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
@@ -146,7 +151,7 @@ class _SenderBubbleState extends State<SenderBubble> {
               ],
             ),
           ),
-          const SizedBox(width: 32),
+          const SizedBox(width: 14),
         ],
       ),
     );

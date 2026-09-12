@@ -34,45 +34,53 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
                 return _buildEmptyState(context);
               }
 
-              return RefreshIndicator(
-                onRefresh: () => controller.fetchMessages(),
-                color: AppTheme.accentPurple,
-                backgroundColor: AppTheme.card(context),
-                child: ListView.builder(
-                  controller: controller.scrollController,
-                  reverse: true,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: controller.messages.length + 1,
-                  itemBuilder: (context, index) {
-                    if (index == controller.messages.length) {
-                      if (controller.isLoadingMore.value || controller.hasMore) {
-                        return Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppTheme.accentPurple,
+              return Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 860),
+                  child: RefreshIndicator(
+                    onRefresh: () => controller.fetchMessages(),
+                    color: AppTheme.accentPurple,
+                    backgroundColor: AppTheme.card(context),
+                    child: ListView.builder(
+                      controller: controller.scrollController,
+                      reverse: true,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      itemCount: controller.messages.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == controller.messages.length) {
+                          if (controller.isLoadingMore.value || controller.hasMore) {
+                            return Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppTheme.accentPurple,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                        );
-                      } else {
-                        return ChatHistoryHeader(convo: controller.conversation);
-                      }
-                    }
+                            );
+                          } else {
+                            return ChatHistoryHeader(
+                              convo: controller.conversation,
+                              controller: controller,
+                            );
+                          }
+                        }
 
-                    final message = controller.messages[index];
-                    final isMe = message.senderId == UserModel.instance.userId;
-                    return isMe
-                        ? SenderBubble(
-                            message: message,
-                            conversation: controller.conversation,
-                          )
-                        : ReceiverBubble(message: message);
-                  },
+                        final message = controller.messages[index];
+                        final isMe = message.senderId == UserModel.instance.userId;
+                        return isMe
+                            ? SenderBubble(
+                                message: message,
+                                conversation: controller.conversation,
+                              )
+                            : ReceiverBubble(message: message);
+                      },
+                    ),
+                  ),
                 ),
               );
             }),
@@ -178,7 +186,10 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
 
   Widget _buildEmptyState(BuildContext context) {
     final convo = controller.conversation;
-    return RefreshIndicator(
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 860),
+        child: RefreshIndicator(
       onRefresh: () => controller.fetchMessages(),
       color: AppTheme.accentPurple,
       backgroundColor: AppTheme.card(context),
@@ -239,7 +250,11 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
             ),
           ),
           const SizedBox(height: 16),
-          ChatHistoryHeader(convo: convo, isEmptyState: true),
+          ChatHistoryHeader(
+            convo: convo,
+            isEmptyState: true,
+            controller: controller,
+          ),
           const SizedBox(height: 16),
           Center(
             child: Text(
@@ -266,6 +281,8 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
           ),
           SizedBox(height: MediaQuery.of(context).size.height * 0.1),
         ],
+      ),
+      ),
       ),
     );
   }

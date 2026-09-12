@@ -1,14 +1,15 @@
 import 'dart:io';
 import 'package:conference/config/app_config.dart';
 import 'package:conference/services/http_service.dart';
-import 'package:conference/services/meeting_service.dart';
 import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:livekit_client/livekit_client.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
+import 'widgets/meeting_bottom_controls.dart';
+import 'widgets/participant_grid.dart';
+import 'widgets/participants_list_sheet.dart';
 
 class MeetingRoomPage extends StatefulWidget {
   final ConferenceManager conferenceManager;
@@ -28,8 +29,17 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
   bool _isConnecting = true;
   String? _errorMessage;
   Room? _room;
+  EventsListener<RoomEvent>? _roomListener;
 
   final _http = HttpService.instance;
+
+  List<Participant> get _participants {
+    if (_room == null) return [];
+    return [
+      if (_room!.localParticipant != null) _room!.localParticipant!,
+      ..._room!.remoteParticipants.values,
+    ];
+  }
 
   @override
   void initState() {
@@ -69,6 +79,8 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
 
       if (!mounted) return;
 
+      _setupRoomListeners(room);
+
       setState(() {
         _room = room;
         _isConnecting = false;
@@ -81,6 +93,23 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
         _errorMessage = e.toString();
       });
     }
+  }
+
+  void _setupRoomListeners(Room room) {
+    _roomListener = room.createListener();
+    _roomListener?.on<RoomEvent>((event) {
+      if (!mounted) return;
+      if (event is ParticipantConnectedEvent ||
+          event is ParticipantDisconnectedEvent ||
+          event is TrackSubscribedEvent ||
+          event is TrackUnsubscribedEvent ||
+          event is LocalTrackPublishedEvent ||
+          event is LocalTrackUnpublishedEvent ||
+          event is TrackMutedEvent ||
+          event is TrackUnmutedEvent) {
+        setState(() {});
+      }
+    });
   }
 
   Future<bool> _startBackgroundExecution() async {
@@ -119,19 +148,23 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
   @override
   void dispose() {
     _stopBackgroundExecution();
+    _roomListener?.dispose();
+    _roomListener = null;
     // Clean up — disconnect if still connected
     _room?.disconnect();
     super.dispose();
   }
 
   Future<void> _toggleMic() async {
-    setState(() => _isMicOn = !_isMicOn);
-    await _room?.localParticipant?.setMicrophoneEnabled(_isMicOn);
+    final nextState = !_isMicOn;
+    setState(() => _isMicOn = nextState);
+    await _room?.localParticipant?.setMicrophoneEnabled(nextState);
   }
 
   Future<void> _toggleCamera() async {
-    setState(() => _isCameraOn = !_isCameraOn);
-    await _room?.localParticipant?.setCameraEnabled(_isCameraOn);
+    final nextState = !_isCameraOn;
+    setState(() => _isCameraOn = nextState);
+    await _room?.localParticipant?.setCameraEnabled(nextState);
   }
 
   Future<void> _toggleScreenShare() async {
@@ -170,9 +203,20 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
   Future<void> _leaveMeeting() async {
     setState(() => _isLeaving = true);
     await _stopBackgroundExecution();
+    await _roomListener?.dispose();
+    _roomListener = null;
     await _room?.disconnect();
     if (!mounted) return;
     Navigator.of(context).pop();
+  }
+
+  void _showParticipantsSheet() {
+    ParticipantsListSheet.show(
+      context,
+      participants: _participants,
+      isMicOn: _isMicOn,
+      isCameraOn: _isCameraOn,
+    );
   }
 
   @override
@@ -294,302 +338,44 @@ class _MeetingRoomPageState extends State<MeetingRoomPage> {
   // ─── Main Meeting UI ────────────────────────────────────────
 
   Widget _buildMeetingUI(BuildContext context) {
-    return Column(
+    return Stack(
       children: [
-        // ─── Top Bar ─────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: AppTheme.successGreen.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.fiber_manual_record_rounded,
-                  color: AppTheme.successGreen,
-                  size: 12,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'In Meeting',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppTheme.card(context),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppTheme.divider(context).withValues(alpha: 0.4),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.people_rounded,
-                      size: 16,
-                      color: AppTheme.accentPurple,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${(_room?.remoteParticipants.length ?? 0) + 1}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ─── Video Area ──────────────────────────────────
-        Expanded(
+        // ─── Top: All Participant Cards ─────────────────
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: MeetingBottomControls.height + 6,
           child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.card(context),
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: AppTheme.divider(context).withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Center(
-                  child: Obx(() {
-                    final screenTrack =
-                        MeetingService.instance.activeScreenShareTrack.value;
-                    final videoTrack =
-                        MeetingService.instance.activeVideoTrack.value;
-
-                    if (screenTrack != null) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: IgnorePointer(
-                          child: VideoTrackRenderer(
-                            screenTrack,
-                            fit: VideoViewFit.contain,
-                          ),
-                        ),
-                      );
-                    } else if (videoTrack != null) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(24),
-                        child: IgnorePointer(
-                          child: VideoTrackRenderer(
-                            videoTrack,
-                            fit: VideoViewFit.cover,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.accentGradient,
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'U',
-                              style: TextStyle(
-                                fontSize: 34,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'You',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _isCameraOn ? 'Camera is on' : 'Camera is off',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary(context),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ),
-              ),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+            child: ParticipantGrid(
+              participants: _participants,
+              isMicOn: _isMicOn,
+              isCameraOn: _isCameraOn,
+              onShowAllParticipants: _showParticipantsSheet,
             ),
           ),
         ),
 
-        // ─── Bottom Controls ─────────────────────────────
-        Container(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-          decoration: BoxDecoration(
-            color: AppTheme.card(context).withValues(alpha: 0.95),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            border: Border(
-              top: BorderSide(
-                color: AppTheme.divider(context).withValues(alpha: 0.3),
-              ),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildControlButton(
-                icon: _isMicOn ? Icons.mic_rounded : Icons.mic_off_rounded,
-                label: _isMicOn ? 'Mute' : 'Unmute',
-                isActive: _isMicOn,
-                onTap: _toggleMic,
-              ),
-              _buildControlButton(
-                icon: _isCameraOn
-                    ? Icons.videocam_rounded
-                    : Icons.videocam_off_rounded,
-                label: 'Camera',
-                isActive: _isCameraOn,
-                onTap: _toggleCamera,
-              ),
-              _buildControlButton(
-                icon: Icons.screen_share_rounded,
-                label: 'Share',
-                isActive: _isScreenSharing,
-                onTap: _toggleScreenShare,
-                activeColor: AppTheme.accentPurple,
-              ),
-              _buildControlButton(
-                icon: Icons.groups_rounded,
-                label: 'Team',
-                isActive: false,
-                onTap: () {},
-              ),
-              _buildLeaveButton(),
-            ],
+        // ─── Bottom: Only Control Card ───────────────────
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: MeetingBottomControls.height,
+          child: MeetingBottomControls(
+            isMicOn: _isMicOn,
+            isCameraOn: _isCameraOn,
+            isScreenSharing: _isScreenSharing,
+            isLeaving: _isLeaving,
+            onToggleMic: _toggleMic,
+            onToggleCamera: _toggleCamera,
+            onToggleScreenShare: _toggleScreenShare,
+            onShowParticipants: _showParticipantsSheet,
+            onLeaveMeeting: _leaveMeeting,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildControlButton({
-    required IconData icon,
-    required String label,
-    required bool isActive,
-    required VoidCallback onTap,
-    Color? activeColor,
-  }) {
-    final color = activeColor ?? AppTheme.textPrimary(context);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: isActive
-                  ? (activeColor ?? AppTheme.cardAlt(context)).withValues(
-                      alpha: 0.25,
-                    )
-                  : AppTheme.cardAlt(context),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isActive
-                    ? color.withValues(alpha: 0.4)
-                    : AppTheme.divider(context).withValues(alpha: 0.3),
-              ),
-            ),
-            child: Icon(
-              icon,
-              color: isActive ? color : AppTheme.textSecondary(context),
-              size: 22,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.textSecondary(context),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeaveButton() {
-    return GestureDetector(
-      onTap: _isLeaving ? null : _leaveMeeting,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppTheme.errorRed,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.errorRed.withValues(alpha: 0.3),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: _isLeaving
-                ? const Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                : const Icon(
-                    Icons.call_end_rounded,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Leave',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.errorRed,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

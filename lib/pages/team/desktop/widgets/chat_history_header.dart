@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 /// Card showing rich user / space metadata at the very top of the chat history
-/// or when there are no messages, preventing the page from looking blank on mobile.
+/// or when there are no messages, preventing the page from looking blank.
 class ChatHistoryHeader extends StatelessWidget {
   final Conversation convo;
   final bool isEmptyState;
@@ -50,8 +50,8 @@ class ChatHistoryHeader extends StatelessWidget {
     return Center(
       child: Container(
         constraints: const BoxConstraints(maxWidth: 580),
-        margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-        padding: const EdgeInsets.all(20),
+        margin: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -88,19 +88,20 @@ class ChatHistoryHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // ── Large Avatar with Status Ring ──
         Stack(
           alignment: Alignment.bottomRight,
           children: [
             AppAvatar(
               imageUrl: avatarUrl,
               name: name,
-              size: 64,
-              fontSize: 22,
+              size: 68,
+              fontSize: 24,
               border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
             ),
             Container(
-              width: 15,
-              height: 15,
+              width: 16,
+              height: 16,
               decoration: BoxDecoration(
                 color: isOnline
                     ? const Color(0xFF22C55E)
@@ -111,12 +112,13 @@ class ChatHistoryHeader extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
+        // ── Full Name ──
         Text(
           name,
           style: const TextStyle(
-            fontSize: 17,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: Color(0xFF1F2937),
             letterSpacing: -0.2,
@@ -125,6 +127,7 @@ class ChatHistoryHeader extends StatelessWidget {
         ),
         const SizedBox(height: 4),
 
+        // ── Email & Status Badge ──
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -132,16 +135,19 @@ class ChatHistoryHeader extends StatelessWidget {
               Text(
                 email,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: 12.5,
                   color: Color(0xFF6B7280),
                 ),
               ),
-              const SizedBox(width: 6),
-              const Text('•', style: TextStyle(color: Color(0xFFD1D5DB))),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
+              const Text(
+                '•',
+                style: TextStyle(color: Color(0xFFD1D5DB)),
+              ),
+              const SizedBox(width: 8),
             ],
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: isOnline
                     ? const Color(0xFFDCFCE7)
@@ -152,8 +158,8 @@ class ChatHistoryHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 5,
-                    height: 5,
+                    width: 6,
+                    height: 6,
                     decoration: BoxDecoration(
                       color: isOnline
                           ? const Color(0xFF16A34A)
@@ -165,7 +171,7 @@ class ChatHistoryHeader extends StatelessWidget {
                   Text(
                     isOnline ? 'Active Now' : 'Offline',
                     style: TextStyle(
-                      fontSize: 10.5,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: isOnline
                           ? const Color(0xFF16A34A)
@@ -178,30 +184,32 @@ class ChatHistoryHeader extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         const Divider(height: 1, color: Color(0xFFF3F4F6)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
+        // ── Description / Context ──
         Text(
-          'This is the beginning of your 1-on-1 message history with $name. Direct messages sent here are private.',
+          'This is the very beginning of your direct chat history with $name. Send a message or schedule a call to connect.',
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 12.5,
             color: Color(0xFF4B5563),
-            height: 1.4,
+            height: 1.45,
           ),
         ),
 
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
 
+        // ── Quick Conversation Starters ──
         Wrap(
-          spacing: 6,
-          runSpacing: 6,
+          spacing: 8,
+          runSpacing: 8,
           alignment: WrapAlignment.center,
           children: [
             _buildQuickChip('👋 Say Hello!'),
-            _buildQuickChip('📅 Quick meeting?'),
-            _buildQuickChip('🚀 Ready to start!'),
+            _buildQuickChip('📅 Free for a quick sync?'),
+            _buildQuickChip('🚀 Let\'s collaborate!'),
           ],
         ),
       ],
@@ -235,34 +243,37 @@ class ChatHistoryHeader extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // ── Space Avatar (Rounded Square matching team.png) ──
         AppAvatar(
           imageUrl: convo.avatar,
           name: title,
-          size: 64,
-          borderRadius: BorderRadius.circular(14),
-          backgroundColor: const Color(0xFFFB7185),
-          fontSize: 22,
+          size: 68,
+          borderRadius: BorderRadius.circular(16),
+          backgroundColor: const Color(0xFFFB7185), // Coral from team.png
+          fontSize: 24,
           border: Border.all(color: const Color(0xFFE5E7EB), width: 2),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
+        // ── Space Title ──
         Text(
           title,
           style: const TextStyle(
-            fontSize: 17.5,
+            fontSize: 19,
             fontWeight: FontWeight.w700,
             color: Color(0xFF1F2937),
-            letterSpacing: -0.2,
+            letterSpacing: -0.3,
           ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 4),
 
+        // ── Member Count & Tag Badge ──
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(8),
@@ -272,7 +283,7 @@ class ChatHistoryHeader extends StatelessWidget {
                 'GROUP SPACE',
                 style: TextStyle(
                   color: Color(0xFF1D4ED8),
-                  fontSize: 9.5,
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
                 ),
@@ -282,7 +293,7 @@ class ChatHistoryHeader extends StatelessWidget {
             Text(
               '$memberCount members',
               style: const TextStyle(
-                fontSize: 12,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF6B7280),
               ),
@@ -290,72 +301,129 @@ class ChatHistoryHeader extends StatelessWidget {
           ],
         ),
 
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
 
+        // ── Description ──
         Text(
           convo.description != null && convo.description!.isNotEmpty
               ? convo.description!
-              : 'Welcome to $title! Everyone in this space can collaborate and share updates.',
+              : 'Welcome to $title! Everyone in this space can collaborate, share updates, and join group meetings.',
           textAlign: TextAlign.center,
           style: const TextStyle(
-            fontSize: 12,
+            fontSize: 12.5,
             color: Color(0xFF4B5563),
-            height: 1.4,
+            height: 1.45,
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         const Divider(height: 1, color: Color(0xFFF3F4F6)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
+        // ── Creation Details ──
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.info_outline_rounded,
-                size: 13, color: Color(0xFF9CA3AF)),
-            const SizedBox(width: 5),
+                size: 14, color: Color(0xFF9CA3AF)),
+            const SizedBox(width: 6),
             Text(
               'Created by $creatorName on $formattedDate',
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 11.5,
                 color: Color(0xFF6B7280),
               ),
             ),
           ],
         ),
 
-        const SizedBox(height: 14),
+        // ── Overlapping Member Avatars ──
+        if (convo.members.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _buildMemberAvatarsRow(context),
+        ],
 
+        const SizedBox(height: 16),
+
+        // ── Quick Conversation Starters ──
         Wrap(
-          spacing: 6,
-          runSpacing: 6,
+          spacing: 8,
+          runSpacing: 8,
           alignment: WrapAlignment.center,
           children: [
             _buildQuickChip('👋 Hey everyone!'),
-            _buildQuickChip('📋 Today\'s agenda?'),
-            _buildQuickChip('🚀 Ready to start!'),
+            _buildQuickChip('📋 What\'s today\'s agenda?'),
+            _buildQuickChip('🚀 Ready to sync!'),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildQuickChip(String text) {
-    return GestureDetector(
-      onTap: () => _onStarterTapped(text),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+  Widget _buildMemberAvatarsRow(BuildContext context) {
+    final previewCount = convo.members.length > 6 ? 6 : convo.members.length;
+    final displayMembers = convo.members.take(previewCount).toList();
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: 30,
+          child: Stack(
+            children: [
+              for (int i = 0; i < displayMembers.length; i++)
+                Positioned(
+                  left: i * 20.0,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: AppAvatar(
+                      imageUrl: displayMembers[i].avatar,
+                      name: displayMembers[i].firstName,
+                      size: 26,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF374151),
+        if (convo.members.length > 6) ...[
+          const SizedBox(width: 6),
+          Text(
+            '+${convo.members.length - 6} more',
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildQuickChip(String text) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => _onStarterTapped(text),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF374151),
+            ),
           ),
         ),
       ),

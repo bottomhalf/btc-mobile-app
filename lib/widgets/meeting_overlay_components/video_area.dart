@@ -90,7 +90,12 @@ class _VideoAreaState extends State<VideoArea> {
                         );
                       } else if (service.participants.isNotEmpty) {
                         return Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: EdgeInsets.fromLTRB(
+                            8.0,
+                            8.0,
+                            8.0,
+                            service.isControlsVisible.value ? 88.0 : 8.0,
+                          ),
                           child: ParticipantGrid(
                             participants: service.participants.toList(),
                           ),

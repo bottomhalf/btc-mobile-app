@@ -417,6 +417,19 @@ class ChatService extends GetxService {
     return result.isNotEmpty ? result.first.firstName : "Member";
   }
 
+  String? getParticipantAvatar(String conversationId, String userId) {
+    if (userId == UserModel.instance.userId && UserModel.instance.imageUrl.isNotEmpty) {
+      return UserModel.instance.imageUrl;
+    }
+    var result = conversations
+        .where((x) => x.conversationId == conversationId)
+        .expand((x) => x.members)
+        .where((x) => x.userId == userId)
+        .toList();
+
+    return result.isNotEmpty ? result.first.avatar : null;
+  }
+
   Future<void> _updateConversationLastMessage(Message message) async {
     final currentUserId = UserModel.instance.userId;
     

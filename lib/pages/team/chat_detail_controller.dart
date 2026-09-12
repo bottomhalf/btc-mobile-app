@@ -53,8 +53,16 @@ class ChatDetailController extends GetxController {
 
   @override
   void onClose() {
-    _chatService.activeMessages.clear(); // Clear so next chat starts fresh
-    _chatService.ws.currentConversationId.value = null; // Unbind
+    final closingId = conversation.conversationId;
+    // Defer resetting shared chat service state to post-frame so it never
+    // triggers an Obx rebuild while Flutter is unmounting elements / locking the tree.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_chatService.ws.currentConversationId.value == closingId) {
+        _chatService.ws.currentConversationId.value = null;
+        _chatService.activeMessages.clear();
+      }
+    });
+
     for (final sub in _localSubscriptions) {
       sub.cancel();
     }
@@ -158,6 +166,7 @@ class ChatDetailController extends GetxController {
         // Mark local cached unread messages as seen
         markIncomingMessagesAsSeen(cached);
       } else {
+        messages.clear();
         // Keep loading = true to show spinner until server responds
         isLoading.value = true;
         debugPrint('[ChatDetailController] No cached messages found. Waiting for server fetch.');

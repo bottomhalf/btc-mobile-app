@@ -1,55 +1,440 @@
 import 'package:conference/models/conversation.dart';
-import 'package:conference_sdk/conference_sdk.dart';
+import 'package:conference/models/user_model.dart';
+import 'package:conference/shared/widgets/app_avatar.dart';
+import 'package:conference/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../models/meeting_model.dart';
-import '../../../models/chat_message_model.dart';
-import '../../../models/user_model.dart';
-import '../../../theme/app_theme.dart';
-import '../../../services/meeting_service.dart';
-import '../team_controller.dart';
 import '../chat_detail_controller.dart';
-import '../service/chat_service.dart';
+import '../team_controller.dart';
+import 'widgets/chat_history_header.dart';
+import 'widgets/desktop_convo_tile.dart';
+import 'widgets/desktop_right_side_panel.dart';
+import 'widgets/message_input.dart';
+import 'widgets/receiver_bubble.dart';
+import 'widgets/sender_bubble.dart';
 
-/// Desktop-optimised team page.
+/// Desktop-optimised team page matching the team.png reference design.
 ///
-/// Uses a master-detail split layout:
-/// - Left panel (~35%): Conversation list
-/// - Right panel (~65%): Selected chat detail (inline, no navigation)
-///
-/// On desktop, clicking a conversation opens it in the right panel
-/// instead of navigating to a separate page.
+/// Features:
+/// - Top Global Bar: Search input with Ctrl+K badge, "+ Create Group" button, user profile
+/// - Left Sidebar (~280px): Profile card (Available status), search box, collapsible Chat and Group [3] sections
+/// - Middle Chat Panel: Header with "[ 📹 Join ]" button, phone, sparkles, add person & menu icons
+/// - Date separator ("8/20/2026")
+/// - Messages: Google Chat style cards with pastel avatars, @mentions, and soft lavender sender bubbles
+/// - Bottom Input Bar: Formatted tools (T, paperclip, emoji, GIF) and "Type a new message or @mention"
+/// - Right Panel: Companion vertical rail matching team.png (Calendar, Keep, Voice, Tasks, Add-ons)
 class DesktopTeamPage extends GetView<TeamController> {
   const DesktopTeamPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.surface(context),
-      body: Row(
+      backgroundColor: Colors.white,
+      body: Column(
         children: [
-          // ── Left: Conversation list ──
-          SizedBox(
-            width: 280,
-            child: _ConversationListPanel(controller: controller),
+          // ── Top Global Bar (Search people, chats, messages... + Create Group) ──
+          _buildGlobalTopBar(context),
+
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+
+          // ── Main Content Area (Sidebar + Chat Detail + Right Companion Panel) ──
+          Expanded(
+            child: Row(
+              children: [
+                // ── Left: Conversation list sidebar ──
+                SizedBox(
+                  width: 290,
+                  child: _ConversationListPanel(controller: controller),
+                ),
+
+                // ── Divider ──
+                const VerticalDivider(
+                  width: 1,
+                  thickness: 1,
+                  color: Color(0xFFE5E7EB),
+                ),
+
+                // ── Middle: Selected Chat detail ──
+                Expanded(
+                  child: Obx(() {
+                    if (controller.selectedConversation.value == null) {
+                      return _buildEmptySelectionState(context);
+                    }
+                    return _DesktopChatDetail(
+                      key: ValueKey(
+                        controller.selectedConversation.value!.conversationId,
+                      ),
+                      conversation: controller.selectedConversation.value!,
+                    );
+                  }),
+                ),
+
+                // ── Far Right: Companion Bar matching team.png ──
+                const DesktopRightSidePanel(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGlobalTopBar(BuildContext context) {
+    final user = UserModel.instance;
+
+    return Container(
+      height: 52,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      color: Colors.white,
+      child: Row(
+        children: [
+          const SizedBox(width: 8),
+          const Spacer(),
+
+          // Centered global search bar with Ctrl+K shortcut
+          Container(
+            width: 440,
+            height: 36,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.search_rounded,
+                  size: 18,
+                  color: Color(0xFF9CA3AF),
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Search people, chats, messages...',
+                    style: TextStyle(
+                      color: Color(0xFF9CA3AF),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: const Text(
+                    'Ctrl+K',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          // ── Divider ──
-          VerticalDivider(
-            width: 1,
-            thickness: 1,
-            color: AppTheme.divider(context).withValues(alpha: 0.5),
+          const Spacer(),
+
+          // "+ Create Group" button
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: OutlinedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.group_add_outlined, size: 16),
+              label: const Text(
+                'Create Group',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF374151),
+                side: const BorderSide(color: Color(0xFFD1D5DB)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              ),
+            ),
           ),
 
-          // ── Right: Chat detail ──
+          const SizedBox(width: 14),
+
+          // User avatar
+          AppAvatar(
+            imageUrl: user.imageUrl,
+            name: user.fullName.isNotEmpty ? user.fullName : 'MI',
+            size: 32,
+            backgroundColor: const Color(0xFFFFB4A2), // Peach from team.png
+            fontSize: 12,
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptySelectionState(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 48,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Select a conversation',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Choose a conversation from the left panel to start chatting',
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ── Conversation list sidebar matching team.png ──
+class _ConversationListPanel extends StatefulWidget {
+  const _ConversationListPanel({required this.controller});
+  final TeamController controller;
+
+  @override
+  State<_ConversationListPanel> createState() => _ConversationListPanelState();
+}
+
+class _ConversationListPanelState extends State<_ConversationListPanel> {
+  final TextEditingController _searchController = TextEditingController();
+  final RxString _searchQuery = ''.obs;
+
+  bool _isChatExpanded = true;
+  bool _isGroupExpanded = true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = UserModel.instance;
+
+    return Container(
+      color: Colors.white,
+      child: Column(
+        children: [
+          // ── User Profile Card (Available status) ──
+          Container(
+            margin: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                AppAvatar(
+                  imageUrl: user.imageUrl,
+                  name: user.fullName.isNotEmpty ? user.fullName : 'MI',
+                  size: 36,
+                  backgroundColor: const Color(0xFFFFB4A2), // Peach color from team.png
+                  fontSize: 13,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.fullName.isNotEmpty ? user.fullName : 'Md IstiyaQ',
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF1F2937),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFF22C55E), // Green dot
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          const Text(
+                            'Available',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF16A34A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // ── Search conversations bar ──
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Container(
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.search_rounded,
+                    size: 17,
+                    color: Color(0xFF9CA3AF),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: (val) => _searchQuery.value = val,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFF1F2937),
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: 'Search conversations...',
+                        hintStyle: TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF9CA3AF),
+                        ),
+                        isDense: true,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 6),
+
+          // ── Chat & Group list ──
           Expanded(
             child: Obx(() {
-              if (controller.selectedConversation.value == null) {
-                return _buildEmptyState(context);
+              if (widget.controller.isLoading.value) {
+                return Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.accentPurple,
+                    strokeWidth: 2.5,
+                  ),
+                );
               }
-              return _DesktopChatDetail(
-                key: ValueKey(controller.selectedConversation.value!.conversationId),
-                conversation: controller.selectedConversation.value!,
+
+              final allConvos = widget.controller.conversations;
+              final query = _searchQuery.value.trim().toLowerCase();
+
+              final filtered = query.isEmpty
+                  ? allConvos
+                  : allConvos.where((c) {
+                      final titleMatches =
+                          c.title.toLowerCase().contains(query);
+                      final memberMatches = c.members.any((m) =>
+                          m.firstName.toLowerCase().contains(query) ||
+                          m.email.toLowerCase().contains(query));
+                      return titleMatches || memberMatches;
+                    }).toList();
+
+              final members =
+                  filtered.where((c) => c.type != 'group').toList();
+              final groups =
+                  filtered.where((c) => c.type == 'group').toList();
+
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                children: [
+                  // ── Section 1: Chat ──
+                  _buildSectionHeader(
+                    title: 'Chat',
+                    badge: null,
+                    isExpanded: _isChatExpanded,
+                    onToggle: () {
+                      setState(() {
+                        _isChatExpanded = !_isChatExpanded;
+                      });
+                    },
+                    onAdd: () {},
+                  ),
+                  if (_isChatExpanded) ...[
+                    for (final item in members)
+                      DesktopConvoTile(
+                        key: ValueKey(item.conversationId),
+                        c: item,
+                        controller: widget.controller,
+                      ),
+                  ],
+
+                  const SizedBox(height: 8),
+
+                  // ── Section 2: Group [3] ──
+                  _buildSectionHeader(
+                    title: 'Group',
+                    badge: groups.isNotEmpty ? '${groups.length}' : '3',
+                    isExpanded: _isGroupExpanded,
+                    onToggle: () {
+                      setState(() {
+                        _isGroupExpanded = !_isGroupExpanded;
+                      });
+                    },
+                    onAdd: () {},
+                  ),
+                  if (_isGroupExpanded) ...[
+                    for (final item in groups)
+                      DesktopConvoTile(
+                        key: ValueKey(item.conversationId),
+                        c: item,
+                        controller: widget.controller,
+                      ),
+                  ],
+                ],
               );
             }),
           ),
@@ -58,469 +443,74 @@ class DesktopTeamPage extends GetView<TeamController> {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: 64,
-            color: AppTheme.textSecondary(context).withValues(alpha: 0.3),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Select a conversation',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppTheme.textSecondary(context).withValues(alpha: 0.6),
+  Widget _buildSectionHeader({
+    required String title,
+    required String? badge,
+    required bool isExpanded,
+    required VoidCallback onToggle,
+    required VoidCallback onAdd,
+  }) {
+    return InkWell(
+      onTap: onToggle,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        child: Row(
+          children: [
+            Icon(
+              isExpanded
+                  ? Icons.arrow_drop_down_rounded
+                  : Icons.arrow_right_rounded,
+              size: 20,
+              color: const Color(0xFF4B5563),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Choose a conversation from the left panel to start chatting',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary(context).withValues(alpha: 0.4),
+            const SizedBox(width: 2),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF374151),
+              ),
             ),
-          ),
-        ],
+            if (badge != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE5E7EB),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  badge,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4B5563),
+                  ),
+                ),
+              ),
+            ],
+            const Spacer(),
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: onAdd,
+                child: const Icon(
+                  Icons.add,
+                  size: 17,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// ── Conversation list panel (left side) ──
-class _ConversationListPanel extends StatelessWidget {
-  const _ConversationListPanel({required this.controller});
-  final TeamController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // ── Header ──
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: AppTheme.card(context),
-            border: Border(
-              bottom: BorderSide(
-                color: AppTheme.divider(context).withValues(alpha: 0.5),
-                width: 1,
-              ),
-            ),
-          ),
-          child: Row(
-            children: [
-              Text(
-                'Team',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: AppTheme.textPrimary(context),
-                ),
-              ),
-              const Spacer(),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: IconButton(
-                  icon: Icon(
-                    Icons.filter_list_rounded,
-                    color: AppTheme.textSecondary(context),
-                    size: 20,
-                  ),
-                  onPressed: () {},
-                  tooltip: 'Filter',
-                ),
-              ),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: IconButton(
-                  icon: Icon(Icons.edit_rounded,
-                      color: AppTheme.accentPurple, size: 20),
-                  onPressed: () {},
-                  tooltip: 'New Team',
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        // ── Search bar ──
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Container(
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppTheme.cardAlt(context),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: AppTheme.divider(context).withValues(alpha: 0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.search_rounded,
-                  size: 18,
-                  color: AppTheme.textSecondary(context),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Search conversations...',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textSecondary(context).withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        // ── Conversation list ──
-        Expanded(
-          child: Obx(() {
-            if (controller.isLoading.value) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.accentPurple,
-                  strokeWidth: 2.5,
-                ),
-              );
-            }
-
-            if (controller.errorMessage.isNotEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline_rounded,
-                      color: AppTheme.errorRed,
-                      size: 40,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      controller.errorMessage.value,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: AppTheme.textSecondary(context),
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton.icon(
-                      onPressed: controller.initConnection,
-                      icon: const Icon(Icons.refresh_rounded, size: 16),
-                      label: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            if (controller.conversations.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.chat_bubble_outline_rounded,
-                      color: AppTheme.textSecondary(context).withValues(alpha: 0.4),
-                      size: 48,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No conversations yet.',
-                      style: TextStyle(
-                        color: AppTheme.textSecondary(context),
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            final members = controller.conversations.toList();
-            final groups = [];
-
-            return Column(
-              children: [
-                // Members Section (70%)
-                Expanded(
-                  flex: 7,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                        child: Text(
-                          'MEMBERS',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textSecondary(context),
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemCount: members.length,
-                          itemBuilder: (context, index) {
-                            return _DesktopConvoTile(
-                              c: members[index],
-                              controller: controller,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Divider
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Divider(
-                    color: AppTheme.divider(context).withValues(alpha: 0.5),
-                    height: 1,
-                  ),
-                ),
-
-                // Groups Section (30%)
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                        child: Text(
-                          'GROUPS',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.textSecondary(context),
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemCount: groups.length,
-                          itemBuilder: (context, index) {
-                            return _DesktopConvoTile(
-                              c: groups[index],
-                              controller: controller,
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }),
-        ),
-      ],
-    );
-  }
-}
-
-/// ── Single conversation tile for desktop ──
-class _DesktopConvoTile extends StatelessWidget {
-  const _DesktopConvoTile({
-    required this.c,
-    required this.controller,
-  });
-
-  final Conversation c;
-  final TeamController controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final isGroup = c.type == 'group';
-
-    String title = c.type;
-    if (title.isEmpty) {
-      title = isGroup ? 'Group Chat' : 'Direct Message';
-    }
-
-    String initials = '?';
-    if (title.isNotEmpty) {
-      final parts = title.trim().split(' ');
-      if (parts.length >= 2) {
-        initials = '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-      } else {
-        initials = title[0].toUpperCase();
-      }
-    }
-
-    final gradients = [
-      const [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
-      const [Color(0xFF2D7FF9), Color(0xFF18BFFF)],
-      const [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-      const [Color(0xFF00B894), Color(0xFF55EFC4)],
-      const [Color(0xFFE17055), Color(0xFFF8A5C2)],
-    ];
-    final colorPair = gradients[c.conversationId.hashCode.abs() % gradients.length];
-
-    return Obx(() {
-      final isSelected = controller.selectedConversation.value?.conversationId == c.conversationId;
-
-      return MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => controller.selectConversation(c),
-            borderRadius: BorderRadius.circular(10),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppTheme.accentPurple.withValues(alpha: 0.1)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: isSelected
-                    ? Border.all(
-                        color: AppTheme.accentPurple.withValues(alpha: 0.2),
-                        width: 1,
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: colorPair),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Obx(() {
-                      final unreadCount = ChatService.instance.unreadCounts[c.conversationId] ?? 0;
-                      final hasUnread = unreadCount > 0;
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  title,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: hasUnread
-                                        ? FontWeight.w800
-                                        : (isSelected ? FontWeight.w700 : FontWeight.w600),
-                                    color: AppTheme.textPrimary(context),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    c.timeAgo,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                                      color: hasUnread
-                                          ? AppTheme.accentPurple
-                                          : AppTheme.textSecondary(context),
-                                    ),
-                                  ),
-                                  if (hasUnread) ...[
-                                    const SizedBox(height: 2),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.accentPurple,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      constraints: const BoxConstraints(minWidth: 15, minHeight: 15),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        '$unreadCount',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            c.lastMessage ??
-                                (isGroup
-                                    ? 'You were added to the group'
-                                    : 'Start of conversation'),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-                              color: hasUnread
-                                  ? AppTheme.textPrimary(context)
-                                  : AppTheme.textSecondary(context),
-                            ),
-                          ),
-                        ],
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    });
-  }
-}
-
-/// ── Inline chat detail for desktop (right panel) ──
-///
-/// This is a self-contained chat view that loads messages for the
-/// given conversation. It does NOT use GetView/ChatDetailController
-/// binding to avoid route-dependent state issues.
+/// ── Inline chat detail matching team.png ──
 class _DesktopChatDetail extends StatefulWidget {
   const _DesktopChatDetail({
     super.key,
@@ -539,7 +529,6 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
   @override
   void initState() {
     super.initState();
-    // Register a controller for this specific conversation
     _chatController = Get.put(
       ChatDetailController(conversation: widget.conversation),
       tag: widget.conversation.conversationId,
@@ -548,7 +537,12 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
 
   @override
   void dispose() {
-    Get.delete<ChatDetailController>(tag: widget.conversation.conversationId);
+    final tag = widget.conversation.conversationId;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Get.isRegistered<ChatDetailController>(tag: tag)) {
+        Get.delete<ChatDetailController>(tag: tag);
+      }
+    });
     super.dispose();
   }
 
@@ -558,10 +552,12 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
 
     return Column(
       children: [
-        // ── Chat header ──
+        // ── Chat Header Bar matching team.png ──
         _buildChatHeader(context, convo),
 
-        // ── Messages ──
+        const Divider(height: 1, color: Color(0xFFE5E7EB)),
+
+        // ── Messages Stream ──
         Expanded(
           child: Obx(() {
             if (_chatController.isLoading.value &&
@@ -574,447 +570,208 @@ class _DesktopChatDetailState extends State<_DesktopChatDetail> {
               );
             }
 
-            if (_chatController.messages.isEmpty &&
-                !_chatController.isLoading.value) {
-              return Center(
-                child: Text(
-                  'No messages yet',
-                  style: TextStyle(color: AppTheme.textSecondary(context)),
-                ),
-              );
-            }
+            final messages = _chatController.messages;
 
-            return ListView.builder(
+            return Scrollbar(
               controller: _chatController.scrollController,
-              reverse: true,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              itemCount: _chatController.messages.length +
-                  (_chatController.isLoadingMore.value ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == _chatController.messages.length) {
-                  return Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Center(
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppTheme.accentPurple,
+              thumbVisibility: true,
+              interactive: true,
+              thickness: 6.0,
+              radius: const Radius.circular(3),
+              child: ListView.builder(
+                controller: _chatController.scrollController,
+                reverse: true,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                itemCount: messages.length + 2,
+                itemBuilder: (context, index) {
+                  Widget content;
+                  // Top of chat history: User / Space Info Card
+                  if (index == messages.length + 1) {
+                    if (_chatController.isLoadingMore.value) {
+                      content = const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         ),
-                      ),
+                      );
+                    } else {
+                      content = ChatHistoryHeader(
+                        convo: convo,
+                        controller: _chatController,
+                      );
+                    }
+                  }
+                  // Below info card: Date separator
+                  else if (index == messages.length) {
+                    content = _buildDateSeparator(convo);
+                  } else {
+                    final message = messages[index];
+                    final isMe =
+                        message.senderId == UserModel.instance.userId;
+
+                    content = isMe
+                        ? SenderBubble(
+                            message: message,
+                            conversation: convo,
+                          )
+                        : ReceiverBubble(message: message);
+                  }
+
+                  return Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 860),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: content,
                     ),
                   );
-                }
-
-                final message = _chatController.messages[index];
-                final isMe =
-                    message.senderId != UserModel.instance.userId;
-                return _buildMessageBubble(context, message, isMe);
-              },
+                },
+              ),
             );
           }),
         ),
 
-        // ── Message input ──
-        _buildMessageInput(context),
+        // ── Bottom Input Bar matching team.png ──
+        MessageInput(controller: _chatController),
       ],
     );
   }
 
   Widget _buildChatHeader(BuildContext context, Conversation c) {
-    final gradients = [
-      const [Color(0xFF6C5CE7), Color(0xFF8E7CF3)],
-      const [Color(0xFF2D7FF9), Color(0xFF18BFFF)],
-      const [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
-    ];
-    final colorPair = gradients[c.conversationId.hashCode.abs() % gradients.length];
+    final currentUserId = UserModel.instance.userId;
+    final otherMembers =
+        c.members.where((m) => m.userId != currentUserId).toList();
+    final otherMember =
+        otherMembers.isNotEmpty ? otherMembers.first : null;
+    final avatarUrl = otherMember?.avatar ?? c.avatar;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        border: Border(
-          bottom: BorderSide(
-            color: AppTheme.divider(context).withValues(alpha: 0.5),
-            width: 1,
-          ),
-        ),
-      ),
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      color: Colors.white,
       child: Row(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: colorPair),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                c.title.isNotEmpty
-                    ? c.title[0].toUpperCase()
-                    : '?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
+          // Header Avatar (Coral / Peach from team.png with image fallback to letter)
+          AppAvatar(
+            imageUrl: avatarUrl,
+            name: c.title.isNotEmpty ? c.title : 'Daily Stand-Up Meeting',
+            size: 38,
+            borderRadius: BorderRadius.circular(8),
+            backgroundColor: const Color(0xFFFB7185), // Coral from team.png
+            fontSize: 14,
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
+
+          // Title and member count
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  c.title.isNotEmpty
-                      ? c.title
-                      : 'Chat',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary(context),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  c.title.isNotEmpty ? c.title : 'Daily Stand-Up Meeting',
+                  style: const TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
                   ),
                 ),
                 Text(
-                  '${c.memberCount} participants',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary(context),
+                  '${c.memberCount} members',
+                  style: const TextStyle(
                     fontSize: 12,
+                    color: Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
           ),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: IconButton(
-              icon: Icon(Icons.videocam_rounded, color: AppTheme.accentPurple),
-              onPressed: () {
-                MeetingService.instance.joinMeeting(
-                  roomId: c.conversationId,
-                  participantName: UserModel.instance.fullName,
-                  meetingTitle: c.title,
-                );
-              },
-              tooltip: 'Start video call',
-            ),
-          ),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: IconButton(
-              icon: Icon(
-                Icons.info_outline_rounded,
-                color: AppTheme.textSecondary(context),
-              ),
-              onPressed: () {},
-              tooltip: 'Conversation info',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildMessageBubble(
-    BuildContext context,
-    Message message,
-    bool isMe,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment:
-            isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (!isMe) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: AppTheme.accentPurple.withValues(alpha: 0.2),
-              child: Text(
-                message.senderId.isNotEmpty
-                    ? message.senderId[0].toUpperCase()
-                    : '?',
+          // "[ 📹 Join ]" Button matching team.png
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: ElevatedButton.icon(
+              onPressed: () => _chatController.joinMeeting(),
+              icon: const Icon(Icons.videocam_rounded, size: 18, color: Colors.white),
+              label: const Text(
+                'Join',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.accentPurple,
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 13,
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 520),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color:
-                    isMe ? AppTheme.accentPurple : AppTheme.card(context),
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(16),
-                  topRight: const Radius.circular(16),
-                  bottomLeft: Radius.circular(isMe ? 16 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 16),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4338CA), // Indigo/Blue from team.png
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!isMe)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Text(
-                        message.senderId,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.accentPurple,
-                        ),
-                      ),
-                    ),
-                  Text(
-                    message.content,
-                    style: TextStyle(
-                      color: isMe
-                          ? Colors.white
-                          : AppTheme.textPrimary(context),
-                      fontSize: 14,
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatTime(message.createdAt),
-                        style: TextStyle(
-                          color: isMe
-                              ? Colors.white70
-                              : AppTheme.textSecondary(context),
-                          fontSize: 10,
-                        ),
-                      ),
-                      if (isMe) ...[
-                        const SizedBox(width: 8),
-                        _buildStatusIndicator(context, message),
-                      ],
-                    ],
-                  ),
-                ],
+                elevation: 0,
               ),
             ),
           ),
-          if (isMe) const SizedBox(width: 32),
-          if (!isMe) const SizedBox(width: 32),
+
+          const SizedBox(width: 10),
+
+          // Action Icons: Phone, AI sparkles, Add person, More vert
+          _buildHeaderIcon(Icons.phone_outlined, 'Voice call', () {}),
+          _buildHeaderIcon(Icons.auto_awesome_outlined, 'AI Assistant', () {}),
+          _buildHeaderIcon(Icons.person_add_outlined, 'Add members', () {}),
+          _buildHeaderIcon(Icons.more_vert_rounded, 'More options', () {}),
         ],
       ),
     );
   }
 
-  Widget _buildStatusIndicator(BuildContext context, Message message) {
-    final status = message.status;
-    final conversation = _chatController.conversation;
-
-    // Status 0: Pending/Local -> Single check
-    if (status == 0) {
-      return const Icon(
-        Icons.check,
-        size: 14,
-        color: Colors.white70,
-      );
-    }
-
-    // Status 2: Pushed to Server -> Double check
-    if (status == 2) {
-      return const Icon(
-        Icons.done_all,
-        size: 14,
-        color: Colors.white70,
-      );
-    }
-
-    // Status 3: Seen -> Small avatar
-    if (status == 3) {
-      final otherMembers = conversation.members
-          .where((m) => m.userId != message.senderId)
-          .toList();
-
-      final avatarUrl = otherMembers.isNotEmpty ? otherMembers.first.avatar : null;
-      final initials = otherMembers.isNotEmpty && otherMembers.first.firstName.isNotEmpty
-          ? otherMembers.first.firstName[0].toUpperCase()
-          : '?';
-
-      if (avatarUrl != null && avatarUrl.isNotEmpty) {
-        return Container(
-          width: 14,
-          height: 14,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white24,
-          ),
-          child: ClipOval(
-            child: Image.network(
-              avatarUrl,
-              width: 14,
-              height: 14,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => _buildInitialsAvatar(initials),
-            ),
-          ),
-        );
-      } else {
-        return _buildInitialsAvatar(initials);
-      }
-    }
-
-    // Fallback default: single check
-    return const Icon(
-      Icons.check,
-      size: 14,
-      color: Colors.white70,
-    );
-  }
-
-  Widget _buildInitialsAvatar(String initials) {
-    return Container(
-      width: 14,
-      height: 14,
-      decoration: const BoxDecoration(
-        color: Colors.white24,
-        shape: BoxShape.circle,
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        initials,
-        style: const TextStyle(
-          fontSize: 8,
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
+  Widget _buildHeaderIcon(IconData icon, String tooltip, VoidCallback onTap) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Tooltip(
+        message: tooltip,
+        child: IconButton(
+          icon: Icon(icon, size: 19, color: const Color(0xFF4B5563)),
+          onPressed: onTap,
+          padding: const EdgeInsets.all(6),
+          constraints: const BoxConstraints(),
         ),
       ),
     );
   }
 
-  Widget _buildMessageInput(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+  Widget _buildDateSeparator(Conversation convo) {
+    final date = convo.createdAt ?? convo.lastMessageAt ?? DateTime.now();
+    final dateStr = '${date.month}/${date.day}/${date.year}';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: Icon(
-                  Icons.add_circle_outline_rounded,
-                  color: AppTheme.textSecondary(context),
-                  size: 28,
-                ),
-                onPressed: () {},
+          const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Text(
+              dateStr,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: AppTheme.surface(context),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppTheme.divider(context).withValues(alpha: 0.5),
-                ),
-              ),
-              child: TextField(
-                controller: _chatController.messageController,
-                minLines: 1,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(
-                    color: AppTheme.textSecondary(context),
-                    fontSize: 14,
-                  ),
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  isDense: true,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  filled: false,
-                ),
-                style: TextStyle(
-                  color: AppTheme.textPrimary(context),
-                  fontSize: 14,
-                ),
-                onSubmitted: (_) async => await _chatController.sendMessage(),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 2),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppTheme.accentPurple,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.accentPurple.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  padding: const EdgeInsets.all(10),
-                  constraints: const BoxConstraints(),
-                  icon: const Icon(
-                    Icons.send_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  onPressed: _chatController.sendMessage,
-                ),
-              ),
-            ),
-          ),
+          const Expanded(child: Divider(color: Color(0xFFE5E7EB))),
         ],
       ),
     );
-  }
-
-  String _formatTime(DateTime? date) {
-    if (date == null) return '';
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }

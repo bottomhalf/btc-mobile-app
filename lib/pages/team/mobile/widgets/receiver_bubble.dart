@@ -1,5 +1,6 @@
-import 'package:conference/models/chat_message_model.dart';
+import 'dart:math' as math;
 import 'package:conference/pages/team/service/chat_service.dart';
+import 'package:conference/shared/widgets/app_avatar.dart';
 import 'package:conference/theme/app_theme.dart';
 import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter/material.dart';
@@ -32,35 +33,40 @@ class _ReceiverBubbleState extends State<ReceiverBubble> {
 
   @override
   Widget build(BuildContext context) {
-    final initials = widget.message.senderId.isNotEmpty ? widget.message.senderId[0].toUpperCase() : '?';
+    final senderName = chatService.getParticipantName(
+      widget.message.conversationId,
+      widget.message.senderId,
+    );
+    final senderAvatar = chatService.getParticipantAvatar(
+      widget.message.conversationId,
+      widget.message.senderId,
+    );
     final textStyle = TextStyle(
       color: AppTheme.textPrimary(context),
       fontSize: 14,
     );
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bubbleMaxWidth = math.min(screenWidth * 0.75, 520.0);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: AppTheme.accentPurple.withValues(alpha: 0.2),
-            child: Text(
-              initials,
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.accentPurple,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+          const SizedBox(width: 14), // Left gap from edge
+          AppAvatar(
+            imageUrl: senderAvatar,
+            name: senderName.isNotEmpty ? senderName : widget.message.senderId,
+            size: 32,
+            fontSize: 12,
           ),
           const SizedBox(width: 8),
           Flexible(
             child: Container(
               constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.9 - 48, // Max upto 90% of screen width
+                maxWidth: bubbleMaxWidth,
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
@@ -150,7 +156,7 @@ class _ReceiverBubbleState extends State<ReceiverBubble> {
               ),
             ),
           ),
-          const SizedBox(width: 32),
+          const SizedBox(width: 40),
         ],
       ),
     );

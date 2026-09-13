@@ -1,7 +1,6 @@
 import 'package:conference_sdk/conference_sdk.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import 'config/app_config.dart';
 import 'core/storage/storage.dart';
@@ -29,25 +28,13 @@ import 'pages/login/login_controller.dart';
 import 'pages/login/login_page.dart';
 import 'pages/main/main_controller.dart';
 import 'pages/main/main_page.dart';
+import 'pages/privacy_policy/privacy_policy_page.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_service.dart';
 import 'widgets/meeting_overlay_manager.dart';
 
-Future<void> _checkPermissions() async {
-  var status = await Permission.bluetooth.request();
-  if (status.isPermanentlyDenied) {
-    debugPrint('Bluetooth Permission disabled');
-  }
-  status = await Permission.bluetoothConnect.request();
-  if (status.isPermanentlyDenied) {
-    debugPrint('Bluetooth Connect Permission disabled');
-  }
-  await Permission.notification.request();
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await _checkPermissions();
   await AppConfig.initialize();
   await StorageService.instance.initialize();
   await ChatStorage.instance.initialize();
@@ -72,7 +59,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => GetMaterialApp(
-        title: 'Conference',
+        title: 'Confeet Meet',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
@@ -92,6 +79,10 @@ class MyApp extends StatelessWidget {
           binding: BindingsBuilder(() {
             Get.lazyPut(() => LoginController());
           }),
+        ),
+        GetPage(
+          name: '/privacy-policy',
+          page: () => const PrivacyPolicyPage(),
         ),
         GetPage(
           name: '/main',

@@ -26,19 +26,23 @@ class LoginFeatureChips extends StatelessWidget {
         physics: const BouncingScrollPhysics(),
         itemCount: features.length,
         separatorBuilder: (_, _) => const SizedBox(width: 10),
-        itemBuilder: (_, i) => _buildChip(features[i]),
+        itemBuilder: (_, i) => _buildChip(features[i], Theme.of(context).brightness == Brightness.dark),
       ),
     );
   }
 
-  Widget _buildChip(_Feature f) {
+  Widget _buildChip(_Feature f, bool isDark) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: f.color.withValues(alpha: 0.12),
+        color: isDark
+            ? f.color.withValues(alpha: 0.12)
+            : f.color.withValues(alpha: 0.08),
         border: Border.all(
-          color: f.color.withValues(alpha: 0.25),
+          color: isDark
+              ? f.color.withValues(alpha: 0.25)
+              : f.color.withValues(alpha: 0.35),
           width: 1,
         ),
       ),

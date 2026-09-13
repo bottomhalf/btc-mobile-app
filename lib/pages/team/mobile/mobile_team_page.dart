@@ -190,7 +190,7 @@ class MobileTeamPage extends GetView<TeamController> {
                 color: AppTheme.accentPurple,
                 size: 22,
               ),
-              onPressed: () {},
+              onPressed: () => Get.toNamed('/search'),
               tooltip: 'New Chat',
             ),
           ),

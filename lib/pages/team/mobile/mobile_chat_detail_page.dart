@@ -168,7 +168,7 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
             Icons.info_outline_rounded,
             color: AppTheme.textSecondary(context),
           ),
-          onPressed: () {},
+          onPressed: () => _showChatInfo(context),
         ),
         const SizedBox(width: 8),
       ],
@@ -337,6 +337,110 @@ class MobileChatDetailPage extends GetView<ChatDetailController> {
       onPressed: () {
         controller.messageController.text = text;
       },
+    );
+  }
+
+  void _showChatInfo(BuildContext context) {
+    final c = controller.conversation;
+    final isGroup = c.type == 'group';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.card(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.divider(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.accentPurple.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isGroup ? Icons.groups_rounded : Icons.person_rounded,
+                    color: AppTheme.accentPurple,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        c.title.isNotEmpty ? c.title : (isGroup ? 'Group Chat' : 'Direct Message'),
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary(context),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isGroup ? 'Group Conversation' : 'Direct Conversation',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textSecondary(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Divider(color: AppTheme.divider(context).withValues(alpha: 0.5)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Icon(Icons.shield_outlined, size: 18, color: AppTheme.accentPurple),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Messages are secured and private to your organization.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: BorderSide(color: AppTheme.divider(context)),
+                ),
+                child: Text('Close', style: TextStyle(color: AppTheme.textPrimary(context))),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

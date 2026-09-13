@@ -285,7 +285,7 @@ class _MeetingCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // Scheduled / Quick Meet Tag
-                    Flexible(child: _buildTag(isScheduled)),
+                    _buildTag(isScheduled),
                     if (meeting.meetingPassword.isNotEmpty) ...[
                       const SizedBox(width: 4),
                       Flexible(
@@ -484,12 +484,16 @@ class _MeetingCard extends StatelessWidget {
                                     color: Color(0xFF00B894),
                                   ),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    'Instant Room',
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.textPrimary(context),
+                                  Expanded(
+                                    child: Text(
+                                      'Instant Room',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppTheme.textPrimary(context),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -503,11 +507,15 @@ class _MeetingCard extends StatelessWidget {
                                     color: AppTheme.textSecondary(context),
                                   ),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    _formatDate(meeting.startDate),
-                                    style: TextStyle(
-                                      fontSize: 9.5,
-                                      color: AppTheme.textSecondary(context),
+                                  Expanded(
+                                    child: Text(
+                                      _formatDate(meeting.startDate),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        color: AppTheme.textSecondary(context),
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -618,25 +626,28 @@ class _MeetingCard extends StatelessWidget {
             width: 0.8,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(
-              Icons.calendar_month_rounded,
-              size: 9.5,
-              color: Color(0xFF8E7CF3),
-            ),
-            SizedBox(width: 3),
-            Text(
-              'Scheduled',
-              style: TextStyle(
-                fontSize: 8.5,
-                fontWeight: FontWeight.w700,
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.calendar_month_rounded,
+                size: 9.5,
                 color: Color(0xFF8E7CF3),
-                letterSpacing: 0.2,
               ),
-            ),
-          ],
+              SizedBox(width: 3),
+              Text(
+                'Scheduled',
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF8E7CF3),
+                  letterSpacing: 0.2,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -651,25 +662,28 @@ class _MeetingCard extends StatelessWidget {
           width: 0.8,
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(
-            Icons.bolt_rounded,
-            size: 10,
-            color: Color(0xFF00B894),
-          ),
-          SizedBox(width: 2.5),
-          Text(
-            'Quick Meet',
-            style: TextStyle(
-              fontSize: 8.5,
-              fontWeight: FontWeight.w700,
+      child: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.bolt_rounded,
+              size: 10,
               color: Color(0xFF00B894),
-              letterSpacing: 0.2,
             ),
-          ),
-        ],
+            SizedBox(width: 2.5),
+            Text(
+              'Quick Meet',
+              style: TextStyle(
+                fontSize: 8.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF00B894),
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

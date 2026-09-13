@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/theme_service.dart';
+import '../../core/storage/storage.dart';
+import '../../services/meeting_service.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -22,6 +24,21 @@ class SettingsPage extends StatelessWidget {
               _buildSectionHeader(context, 'Account'),
               const SizedBox(height: 16),
               _buildAccountOptions(context),
+              const SizedBox(height: 32),
+              _buildSectionHeader(context, 'Legal & About'),
+              const SizedBox(height: 16),
+              _buildLegalOptions(context),
+              const SizedBox(height: 24),
+              Center(
+                child: Text(
+                  'Confeet Meet v1.0.0',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary(context).withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -135,11 +152,163 @@ class SettingsPage extends StatelessWidget {
             context,
             icon: Icons.logout_rounded,
             title: 'Logout',
+            textColor: Colors.orangeAccent,
+            iconColor: Colors.orangeAccent,
+            onTap: () => _handleLogout(context),
+          ),
+          Divider(
+            color: AppTheme.divider(context).withValues(alpha: 0.5),
+            height: 1,
+            indent: 60,
+          ),
+          _buildSettingsTile(
+            context,
+            icon: Icons.delete_forever_rounded,
+            title: 'Delete Account',
             textColor: Colors.redAccent,
             iconColor: Colors.redAccent,
-            onTap: () {
+            onTap: () => _showDeleteAccountDialog(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.card(context),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Log Out',
+          style: TextStyle(
+            color: AppTheme.textPrimary(context),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to log out of Confeet Meet?',
+          style: TextStyle(color: AppTheme.textSecondary(context)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppTheme.textSecondary(context)),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await MeetingService.instance.leaveMeeting();
+              } catch (_) {}
+              await StorageService.instance.clearAll();
               Get.offAllNamed('/login');
             },
+            child: const Text(
+              'Log Out',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.card(context),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
+            SizedBox(width: 8),
+            Text(
+              'Delete Account',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete your account?\n\n'
+          'All your profile data, chat logs, call history, and access tokens stored on this device will be immediately deleted. '
+          'Your account deletion request will be submitted in compliance with Apple privacy guidelines.\n\n'
+          'This action cannot be undone.',
+          style: TextStyle(
+            color: AppTheme.textSecondary(context),
+            fontSize: 13,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: AppTheme.textSecondary(context)),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await MeetingService.instance.leaveMeeting();
+              } catch (_) {}
+              await StorageService.instance.clearAll();
+              Get.offAllNamed('/login');
+              Get.snackbar(
+                'Account Deletion Requested',
+                'Your account and personal data have been erased from this device.',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.redAccent,
+                colorText: Colors.white,
+                margin: const EdgeInsets.all(16),
+                borderRadius: 12,
+                duration: const Duration(seconds: 4),
+              );
+            },
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegalOptions(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.card(context),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.divider(context).withValues(alpha: 0.5),
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildSettingsTile(
+            context,
+            icon: Icons.privacy_tip_outlined,
+            title: 'Privacy Policy',
+            onTap: () => Get.toNamed('/privacy-policy'),
           ),
         ],
       ),

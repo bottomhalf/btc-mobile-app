@@ -203,9 +203,102 @@ class MeetPage extends GetView<MeetController> {
             gradient: const LinearGradient(
               colors: [Color(0xFFFF6B6B), Color(0xFFFF8E53)],
             ),
-            onTap: () {},
+            onTap: () => _showShareScreenInfo(context),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showShareScreenInfo(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.card(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppTheme.divider(context),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF6B6B).withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.screen_share_rounded,
+                color: Color(0xFFFF6B6B),
+                size: 32,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Screen Sharing',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary(context),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'To present your screen, start or join an active meeting and tap the Screen Share icon in the call controls toolbar.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: AppTheme.textSecondary(context),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      side: BorderSide(color: AppTheme.divider(context)),
+                    ),
+                    child: Text(
+                      'Got it',
+                      style: TextStyle(color: AppTheme.textPrimary(context)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      Get.toNamed('/schedule-meeting');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.accentPurple,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Start Meeting'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -244,7 +337,8 @@ class MeetPage extends GetView<MeetController> {
   Widget _buildDashboardBanner(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      height: 140,
+      clipBehavior: Clip.antiAlias,
+      constraints: const BoxConstraints(minHeight: 130),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(
@@ -264,6 +358,7 @@ class MeetPage extends GetView<MeetController> {
         ],
       ),
       child: Stack(
+        clipBehavior: Clip.antiAlias,
         children: [
           // Decorative Background Circles
           Positioned(
@@ -293,14 +388,16 @@ class MeetPage extends GetView<MeetController> {
 
           // Content
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   flex: 3,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -309,7 +406,7 @@ class MeetPage extends GetView<MeetController> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: const Text(
-                          'PRO EDITION',
+                          'ENTERPRISE',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 9,
@@ -318,13 +415,14 @@ class MeetPage extends GetView<MeetController> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       const Text(
                         'Start Instant Meetings',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.bold,
+                          height: 1.2,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -333,6 +431,7 @@ class MeetPage extends GetView<MeetController> {
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
                           fontSize: 11,
+                          height: 1.25,
                         ),
                       ),
                     ],
@@ -345,16 +444,16 @@ class MeetPage extends GetView<MeetController> {
                       alignment: Alignment.center,
                       children: [
                         Container(
-                          width: 70,
-                          height: 70,
+                          width: 66,
+                          height: 66,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             shape: BoxShape.circle,
                           ),
                         ),
                         Container(
-                          width: 54,
-                          height: 54,
+                          width: 50,
+                          height: 50,
                           decoration: const BoxDecoration(
                             color: Colors.white,
                             shape: BoxShape.circle,
@@ -362,7 +461,7 @@ class MeetPage extends GetView<MeetController> {
                           child: Icon(
                             Icons.bolt_rounded,
                             color: AppTheme.accentPurple,
-                            size: 32,
+                            size: 30,
                           ),
                         ),
                       ],

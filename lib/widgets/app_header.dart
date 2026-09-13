@@ -23,7 +23,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
         case 1: // Meet Page
           return _buildPageHeader(
             context,
-            title: 'Confeet',
+            title: 'Confeet Meet',
             subtitle: 'Start or join collaboration meetings',
             icon: Icons.videocam_rounded,
           );

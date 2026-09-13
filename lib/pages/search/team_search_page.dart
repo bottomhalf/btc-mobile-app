@@ -412,37 +412,41 @@ class TeamSearchPage extends GetView<TeamSearchController> {
 
     return DefaultTabController(
       length: 5,
-      child: Column(
-        children: [
-          TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            indicatorColor: AppTheme.accentPurple,
-            labelColor: AppTheme.textPrimary(context),
-            unselectedLabelColor: AppTheme.textSecondary(context),
-            labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-            unselectedLabelStyle: const TextStyle(fontSize: 13),
-            dividerColor: AppTheme.divider(context).withValues(alpha: 0.3),
-            tabs: [
-              const Tab(text: 'All'),
-              Tab(text: 'People ($userCount)'),
-              Tab(text: 'Chats ($conversationCount)'),
-              Tab(text: 'Messages ($messageCount)'),
-              Tab(text: 'Files ($fileCount)'),
+      child: Builder(
+        builder: (tabContext) {
+          return Column(
+            children: [
+              TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                indicatorColor: AppTheme.accentPurple,
+                labelColor: AppTheme.textPrimary(tabContext),
+                unselectedLabelColor: AppTheme.textSecondary(tabContext),
+                labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                unselectedLabelStyle: const TextStyle(fontSize: 13),
+                dividerColor: AppTheme.divider(tabContext).withValues(alpha: 0.3),
+                tabs: [
+                  const Tab(text: 'All'),
+                  Tab(text: 'People ($userCount)'),
+                  Tab(text: 'Chats ($conversationCount)'),
+                  Tab(text: 'Messages ($messageCount)'),
+                  Tab(text: 'Files ($fileCount)'),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildAllTab(tabContext, response),
+                    _buildPeopleTab(tabContext, results?.users ?? []),
+                    _buildChatsTab(tabContext, results?.conversations ?? []),
+                    _buildMessagesTab(tabContext, results?.messages ?? []),
+                    _buildFilesTab(tabContext, results?.files ?? []),
+                  ],
+                ),
+              ),
             ],
-          ),
-          Expanded(
-            child: TabBarView(
-              children: [
-                _buildAllTab(context, response),
-                _buildPeopleTab(context, results?.users ?? []),
-                _buildChatsTab(context, results?.conversations ?? []),
-                _buildMessagesTab(context, results?.messages ?? []),
-                _buildFilesTab(context, results?.files ?? []),
-              ],
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -486,39 +490,45 @@ class TeamSearchPage extends GetView<TeamSearchController> {
   }
 
   Widget _buildSectionHeader(BuildContext context, String title, int tabIndex) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary(context),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              DefaultTabController.of(context).animateTo(tabIndex);
-            },
-            style: TextButton.styleFrom(
-              padding: EdgeInsets.zero,
-              minimumSize: const Size(0, 0),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              'See all',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppTheme.accentPurple,
-                fontWeight: FontWeight.bold,
+    return Builder(
+      builder: (innerContext) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary(innerContext),
+                ),
               ),
-            ),
+              TextButton(
+                onPressed: () {
+                  final tabCtrl = DefaultTabController.maybeOf(innerContext) ??
+                      DefaultTabController.maybeOf(context);
+                  tabCtrl?.animateTo(tabIndex);
+                },
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'See all',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.accentPurple,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 

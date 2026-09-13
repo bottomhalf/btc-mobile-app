@@ -303,6 +303,30 @@ class ProfilePage extends GetView<ProfileController> {
                     height: 1.3,
                   ),
                 ),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => Get.toNamed('/privacy-policy'),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'View Privacy Policy',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.accentPurple,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 9,
+                        color: AppTheme.accentPurple,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

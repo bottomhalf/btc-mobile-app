@@ -9,6 +9,8 @@ class LoginHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return SizedBox(
       width: double.infinity,
       child: Column(
@@ -22,12 +24,12 @@ class LoginHeader extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: _neonPurple.withValues(alpha: 0.4),
+                  color: _neonPurple.withValues(alpha: isDark ? 0.4 : 0.25),
                   blurRadius: 20,
                   offset: const Offset(0, 6),
                 ),
                 BoxShadow(
-                  color: _richIndigo.withValues(alpha: 0.25),
+                  color: _richIndigo.withValues(alpha: isDark ? 0.25 : 0.15),
                   blurRadius: 30,
                   spreadRadius: 1,
                 ),
@@ -45,11 +47,13 @@ class LoginHeader extends StatelessWidget {
 
           // ── App Title ──
           ShaderMask(
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [Colors.white, Color(0xFF06B6D4)],
+            shaderCallback: (bounds) => LinearGradient(
+              colors: isDark
+                  ? const [Colors.white, Color(0xFF06B6D4)]
+                  : const [Color(0xFF0F172A), Color(0xFF4F46E5)],
             ).createShader(bounds),
             child: const Text(
-              'Conference AI',
+              'Confeet Meet',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,
@@ -67,7 +71,9 @@ class LoginHeader extends StatelessWidget {
             'AI-powered meetings with crisp audio,\nHD video & smart transcription',
             style: TextStyle(
               fontSize: 13,
-              color: Colors.white.withValues(alpha: 0.55),
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.55)
+                  : const Color(0xFF475569),
               height: 1.5,
               letterSpacing: 0.2,
             ),

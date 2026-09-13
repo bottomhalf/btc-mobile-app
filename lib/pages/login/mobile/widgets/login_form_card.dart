@@ -12,26 +12,48 @@ class LoginFormCard extends GetView<LoginController> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.1),
-                Colors.white.withValues(alpha: 0.04),
-              ],
-            ),
+            gradient: isDark
+                ? LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.1),
+                      Colors.white.withValues(alpha: 0.04),
+                    ],
+                  )
+                : LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.94),
+                      Colors.white.withValues(alpha: 0.82),
+                    ],
+                  ),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.12),
-              width: 1,
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : Colors.white.withValues(alpha: 0.9),
+              width: 1.5,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark
+                    ? Colors.black.withValues(alpha: 0.3)
+                    : const Color(0xFF0F172A).withValues(alpha: 0.08),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
           child: Form(
             key: controller.formKey,
@@ -39,16 +61,20 @@ class LoginFormCard extends GetView<LoginController> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Email ──
-                _buildLabel('Email Address', Icons.alternate_email_rounded),
+                _buildLabel('Email Address', Icons.alternate_email_rounded, isDark),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: controller.emailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  cursorColor: _electricBlue,
+                  style: TextStyle(
+                    color: isDark ? Colors.white : const Color(0xFF0F172A),
+                    fontSize: 14,
+                  ),
+                  cursorColor: isDark ? _electricBlue : _richIndigo,
                   decoration: _inputDecoration(
                     hint: 'you@company.com',
                     icon: Icons.email_outlined,
+                    isDark: isDark,
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Email is required';
@@ -59,17 +85,21 @@ class LoginFormCard extends GetView<LoginController> {
                 const SizedBox(height: 14),
 
                 // ── Password ──
-                _buildLabel('Password', Icons.lock_outline_rounded),
+                _buildLabel('Password', Icons.lock_outline_rounded, isDark),
                 const SizedBox(height: 6),
                 Obx(
                   () => TextFormField(
                     controller: controller.passwordCtrl,
                     obscureText: controller.obscurePassword.value,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                    cursorColor: _electricBlue,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
+                      fontSize: 14,
+                    ),
+                    cursorColor: isDark ? _electricBlue : _richIndigo,
                     decoration: _inputDecoration(
                       hint: '••••••••',
                       icon: Icons.lock_outline_rounded,
+                      isDark: isDark,
                     ).copyWith(
                       suffixIcon: IconButton(
                         icon: Icon(
@@ -77,7 +107,9 @@ class LoginFormCard extends GetView<LoginController> {
                               ? Icons.visibility_off_rounded
                               : Icons.visibility_rounded,
                           size: 20,
-                          color: Colors.white.withValues(alpha: 0.4),
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.4)
+                              : const Color(0xFF64748B),
                         ),
                         onPressed: controller.togglePasswordVisibility,
                       ),
@@ -95,7 +127,7 @@ class LoginFormCard extends GetView<LoginController> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () => controller.showForgotPasswordDialog(context),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.zero,
                       minimumSize: Size.zero,
@@ -104,7 +136,9 @@ class LoginFormCard extends GetView<LoginController> {
                     child: Text(
                       'Forgot password?',
                       style: TextStyle(
-                        color: _electricBlue.withValues(alpha: 0.85),
+                        color: isDark
+                            ? _electricBlue.withValues(alpha: 0.85)
+                            : _richIndigo,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -185,15 +219,23 @@ class LoginFormCard extends GetView<LoginController> {
     );
   }
 
-  Widget _buildLabel(String text, IconData icon) {
+  Widget _buildLabel(String text, IconData icon, bool isDark) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: _electricBlue.withValues(alpha: 0.7)),
+        Icon(
+          icon,
+          size: 16,
+          color: isDark
+              ? _electricBlue.withValues(alpha: 0.7)
+              : _richIndigo.withValues(alpha: 0.8),
+        ),
         const SizedBox(width: 8),
         Text(
           text,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.7),
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.7)
+                : const Color(0xFF334155),
             fontSize: 13,
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
@@ -206,16 +248,27 @@ class LoginFormCard extends GetView<LoginController> {
   InputDecoration _inputDecoration({
     required String hint,
     required IconData icon,
+    required bool isDark,
   }) {
     return InputDecoration(
       hintText: hint,
       hintStyle: TextStyle(
-        color: Colors.white.withValues(alpha: 0.25),
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.25)
+            : const Color(0xFF94A3B8),
         fontSize: 14,
       ),
-      prefixIcon: Icon(icon, size: 20, color: Colors.white.withValues(alpha: 0.35)),
+      prefixIcon: Icon(
+        icon,
+        size: 20,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.35)
+            : const Color(0xFF64748B),
+      ),
       filled: true,
-      fillColor: Colors.white.withValues(alpha: 0.07),
+      fillColor: isDark
+          ? Colors.white.withValues(alpha: 0.07)
+          : const Color(0xFFF1F5F9).withValues(alpha: 0.8),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -224,14 +277,18 @@ class LoginFormCard extends GetView<LoginController> {
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.08)
+              : const Color(0xFFE2E8F0),
           width: 1,
         ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(
-          color: _electricBlue.withValues(alpha: 0.6),
+          color: isDark
+              ? _electricBlue.withValues(alpha: 0.6)
+              : _richIndigo.withValues(alpha: 0.8),
           width: 1.5,
         ),
       ),

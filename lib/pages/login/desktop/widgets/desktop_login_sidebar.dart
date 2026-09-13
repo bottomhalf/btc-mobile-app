@@ -17,21 +17,22 @@ class DesktopLoginSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: double.infinity,
       height: double.infinity,
-      decoration: const BoxDecoration(
-        color: _deepNavy,
+      decoration: BoxDecoration(
+        color: isDark ? _deepNavy : const Color(0xFFEDF2F7),
       ),
       child: Stack(
         children: [
           // ── Gradient orbs ──
-          _buildGradientOrbs(size),
+          _buildGradientOrbs(size, isDark),
 
           // ── Dot grid ──
           Positioned.fill(
-            child: CustomPaint(painter: _SidebarGridPainter()),
+            child: CustomPaint(painter: _SidebarGridPainter(isDark: isDark)),
           ),
 
           // ── Content ──
@@ -50,12 +51,12 @@ class DesktopLoginSidebar extends StatelessWidget {
                         borderRadius: BorderRadius.circular(14),
                         boxShadow: [
                           BoxShadow(
-                            color: _neonPurple.withValues(alpha: 0.4),
+                            color: _neonPurple.withValues(alpha: isDark ? 0.4 : 0.25),
                             blurRadius: 20,
                             offset: const Offset(0, 6),
                           ),
                           BoxShadow(
-                            color: _richIndigo.withValues(alpha: 0.25),
+                            color: _richIndigo.withValues(alpha: isDark ? 0.25 : 0.15),
                             blurRadius: 30,
                             spreadRadius: 1,
                           ),
@@ -71,11 +72,13 @@ class DesktopLoginSidebar extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [Colors.white, Color(0xFF06B6D4)],
+                      shaderCallback: (bounds) => LinearGradient(
+                        colors: isDark
+                            ? const [Colors.white, Color(0xFF06B6D4)]
+                            : const [Color(0xFF0F172A), Color(0xFF4F46E5)],
                       ).createShader(bounds),
                       child: const Text(
-                        'Conference AI',
+                        'Confeet Meet',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
@@ -94,7 +97,9 @@ class DesktopLoginSidebar extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.95)
+                        : const Color(0xFF0F172A),
                     height: 1.2,
                     letterSpacing: -0.5,
                   ),
@@ -105,7 +110,9 @@ class DesktopLoginSidebar extends StatelessWidget {
                   'and AI-generated meeting notes — all in one place.',
                   style: TextStyle(
                     fontSize: 15,
-                    color: Colors.white.withValues(alpha: 0.5),
+                    color: isDark
+                        ? Colors.white.withValues(alpha: 0.5)
+                        : const Color(0xFF475569),
                     height: 1.6,
                     letterSpacing: 0.1,
                   ),
@@ -119,6 +126,7 @@ class DesktopLoginSidebar extends StatelessWidget {
                   'AI Meeting Notes',
                   'Automatic summaries & action items',
                   _neonPurple,
+                  isDark,
                 ),
                 const SizedBox(height: 20),
                 _buildFeatureItem(
@@ -126,6 +134,7 @@ class DesktopLoginSidebar extends StatelessWidget {
                   'HD Video Conferencing',
                   'Crystal clear 1080p video calls',
                   _richIndigo,
+                  isDark,
                 ),
                 const SizedBox(height: 20),
                 _buildFeatureItem(
@@ -133,6 +142,7 @@ class DesktopLoginSidebar extends StatelessWidget {
                   'Spatial Audio',
                   'Noise-cancelling immersive audio',
                   _electricBlue,
+                  isDark,
                 ),
                 const SizedBox(height: 20),
                 _buildFeatureItem(
@@ -140,6 +150,7 @@ class DesktopLoginSidebar extends StatelessWidget {
                   'Live Captions',
                   'Real-time multi-language transcription',
                   _emeraldGreen,
+                  isDark,
                 ),
 
                 const Spacer(),
@@ -147,14 +158,20 @@ class DesktopLoginSidebar extends StatelessWidget {
                 // ── Bottom trust badge ──
                 Row(
                   children: [
-                    Icon(Icons.shield_outlined,
-                        size: 16,
-                        color: Colors.white.withValues(alpha: 0.3)),
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 16,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.3)
+                          : const Color(0xFF64748B),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'End-to-end encrypted  •  SOC 2 Compliant',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.3)
+                            : const Color(0xFF64748B),
                         fontSize: 12,
                         letterSpacing: 0.3,
                       ),
@@ -174,6 +191,7 @@ class DesktopLoginSidebar extends StatelessWidget {
     String title,
     String subtitle,
     Color color,
+    bool isDark,
   ) {
     return Row(
       children: [
@@ -182,9 +200,9 @@ class DesktopLoginSidebar extends StatelessWidget {
           height: 44,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: color.withValues(alpha: 0.12),
+            color: color.withValues(alpha: isDark ? 0.12 : 0.09),
             border: Border.all(
-              color: color.withValues(alpha: 0.2),
+              color: color.withValues(alpha: isDark ? 0.2 : 0.3),
               width: 1,
             ),
           ),
@@ -198,7 +216,9 @@ class DesktopLoginSidebar extends StatelessWidget {
               Text(
                 title,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : const Color(0xFF1E293B),
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -207,7 +227,9 @@ class DesktopLoginSidebar extends StatelessWidget {
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.4),
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.4)
+                      : const Color(0xFF64748B),
                   fontSize: 13,
                 ),
               ),
@@ -218,7 +240,7 @@ class DesktopLoginSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildGradientOrbs(Size size) {
+  Widget _buildGradientOrbs(Size size, bool isDark) {
     return Stack(
       children: [
         Positioned(
@@ -231,8 +253,8 @@ class DesktopLoginSidebar extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  _richIndigo.withValues(alpha: 0.3),
-                  _richIndigo.withValues(alpha: 0.05),
+                  _richIndigo.withValues(alpha: isDark ? 0.3 : 0.22),
+                  _richIndigo.withValues(alpha: isDark ? 0.05 : 0.04),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.5, 1.0],
@@ -250,8 +272,8 @@ class DesktopLoginSidebar extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  _neonPurple.withValues(alpha: 0.2),
-                  _neonPurple.withValues(alpha: 0.03),
+                  _neonPurple.withValues(alpha: isDark ? 0.2 : 0.18),
+                  _neonPurple.withValues(alpha: isDark ? 0.03 : 0.03),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.5, 1.0],
@@ -269,8 +291,8 @@ class DesktopLoginSidebar extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  _electricBlue.withValues(alpha: 0.15),
-                  _electricBlue.withValues(alpha: 0.02),
+                  _electricBlue.withValues(alpha: isDark ? 0.15 : 0.16),
+                  _electricBlue.withValues(alpha: isDark ? 0.02 : 0.03),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.5, 1.0],
@@ -285,10 +307,15 @@ class DesktopLoginSidebar extends StatelessWidget {
 
 /// ── Subtle dot-grid painter for the sidebar ──
 class _SidebarGridPainter extends CustomPainter {
+  final bool isDark;
+  const _SidebarGridPainter({this.isDark = true});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.025)
+      ..color = isDark
+          ? Colors.white.withValues(alpha: 0.025)
+          : const Color(0xFF0F172A).withValues(alpha: 0.035)
       ..strokeWidth = 1;
 
     const spacing = 28.0;
@@ -300,5 +327,6 @@ class _SidebarGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SidebarGridPainter oldDelegate) =>
+      oldDelegate.isDark != isDark;
 }

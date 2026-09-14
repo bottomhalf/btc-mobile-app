@@ -94,7 +94,7 @@ class SplashPage extends GetView<SplashController> {
                     colors: [Colors.white, Color(0xFF06B6D4)],
                   ).createShader(bounds),
                   child: const Text(
-                    'Confeet Meet',
+                    'Confeet',
                     style: TextStyle(
                       fontSize: 38,
                       fontWeight: FontWeight.w800,

@@ -1,4 +1,3 @@
-import 'package:conference/config/app_config.dart';
 import 'package:conference/core/storage/storage.dart';
 import 'package:conference/models/user_model.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,6 @@ class LoginController extends GetxController {
   final passwordCtrl = TextEditingController();
   final formKey = GlobalKey<FormState>();
   final _storage = StorageService.instance;
-  final _appConfig = AppConfig.instance;
 
   final isLoading = false.obs;
   final obscurePassword = true.obs;
@@ -98,7 +96,7 @@ class LoginController extends GetxController {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Confeet Meet accounts are managed by your organization or workspace administrator.',
+              'Confeet accounts are managed by your organization or workspace administrator.',
               style: TextStyle(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.85)
@@ -202,18 +200,6 @@ class LoginController extends GetxController {
       ),
       duration: const Duration(seconds: 3),
     );
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    if (_appConfig.env == 'development') {
-      emailCtrl.text = 'bottomhalf.dev@gmail.com';
-      passwordCtrl.text = '12345678';
-    } else {
-      emailCtrl.text = 'bottomhalf.dev@gmail.com';
-      passwordCtrl.text = '12345678';
-    }
   }
 
   @override

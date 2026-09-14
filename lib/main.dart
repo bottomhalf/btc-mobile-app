@@ -15,9 +15,8 @@ import 'pages/team/chat_detail_page.dart';
 import 'pages/meet/meet_controller.dart';
 import 'pages/meet/sub_pages/schedule_meeting/schedule_meeting_controller.dart';
 import 'pages/meet/sub_pages/schedule_meeting/schedule_meeting_page.dart';
-import 'pages/calendar/sub_pages/meet_calendar/meet_calendar_controller.dart';
-import 'pages/calendar/sub_pages/meet_calendar/meet_calendar_page.dart';
 import 'pages/calendar/calendar_controller.dart';
+import 'pages/calendar/calendar_page.dart';
 import 'pages/notification/notification_controller.dart';
 import 'pages/notification/notification_page.dart';
 import 'pages/profile/profile_controller.dart';
@@ -59,7 +58,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Obx(
       () => GetMaterialApp(
-        title: 'Confeet Meet',
+        title: 'Confeet',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
@@ -114,9 +113,20 @@ class MyApp extends StatelessWidget {
         ),
         GetPage(
           name: '/meet-calendar',
-          page: () => const MeetCalendarPage(),
+          page: () => const CalendarPage(),
           binding: BindingsBuilder(() {
-            Get.lazyPut(() => MeetCalendarController());
+            if (!Get.isRegistered<CalendarController>()) {
+              Get.lazyPut(() => CalendarController());
+            }
+          }),
+        ),
+        GetPage(
+          name: '/calendar',
+          page: () => const CalendarPage(),
+          binding: BindingsBuilder(() {
+            if (!Get.isRegistered<CalendarController>()) {
+              Get.lazyPut(() => CalendarController());
+            }
           }),
         ),
         GetPage(

@@ -53,7 +53,7 @@ class LoginHeader extends StatelessWidget {
                   : const [Color(0xFF0F172A), Color(0xFF4F46E5)],
             ).createShader(bounds),
             child: const Text(
-              'Confeet Meet',
+              'Confeet',
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w800,

@@ -16,7 +16,7 @@ class SplashController extends GetxController {
       Future.delayed(const Duration(seconds: 2), () => true),
     ]);
 
-    final isAuthenticated = results[0] as bool;
+    final isAuthenticated = results[0];
 
     if (isAuthenticated) {
       debugPrint('Auto-login successful — navigating to home');

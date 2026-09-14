@@ -1,96 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>Confeet</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>Confeet</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(FLUTTER_BUILD_NAME)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(FLUTTER_BUILD_NUMBER)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Confeet requires Bluetooth access to discover, connect, and seamlessly route meeting audio through your wireless headsets, AirPods, and external speakers.</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Confeet requires Bluetooth access to discover, connect, and seamlessly route meeting audio through your wireless headsets, AirPods, and external speakers.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Confeet requires access to your camera to enable high-definition video during meetings, video conferences, and virtual presentations.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Confeet uses your local network to discover local conference devices and optimize peer-to-peer audio and video transmission.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Confeet requires access to your microphone to transmit clear audio to call participants during meetings and to enable live speech-to-text transcriptions.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Confeet requires permission to save meeting snapshots and shared visual notes directly to your photo library.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Confeet requires access to your photo library to allow you to upload and customize your profile avatar and share images during meetings.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Confeet uses speech recognition to transcribe spoken conversations into real-time closed captions and meeting notes.</string>
+	<key>UIApplicationSceneManifest</key>
 	<dict>
-		<key>NSCameraUsageDescription</key>
-		<string>Confeet Meet requires access to your camera to enable high-definition video during meetings, video conferences, and virtual presentations.</string>
-		<key>NSMicrophoneUsageDescription</key>
-		<string>Confeet Meet requires access to your microphone to transmit clear audio to call participants during meetings and to enable live speech-to-text transcriptions.</string>
-		<key>NSBluetoothAlwaysUsageDescription</key>
-		<string>Confeet Meet requires Bluetooth access to discover, connect, and seamlessly route meeting audio through your wireless headsets, AirPods, and external speakers.</string>
-		<key>NSBluetoothPeripheralUsageDescription</key>
-		<string>Confeet Meet requires Bluetooth access to discover, connect, and seamlessly route meeting audio through your wireless headsets, AirPods, and external speakers.</string>
-		<key>NSSpeechRecognitionUsageDescription</key>
-		<string>Confeet Meet uses speech recognition to transcribe spoken conversations into real-time closed captions and meeting notes.</string>
-		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Confeet Meet requires access to your photo library to allow you to upload and customize your profile avatar and share images during meetings.</string>
-		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>Confeet Meet requires permission to save meeting snapshots and shared visual notes directly to your photo library.</string>
-		<key>NSLocalNetworkUsageDescription</key>
-		<string>Confeet Meet uses your local network to discover local conference devices and optimize peer-to-peer audio and video transmission.</string>
-		<key>UIBackgroundModes</key>
-		<array>
-			<string>audio</string>
-		</array>
-		<key>CADisableMinimumFrameDurationOnPhone</key>
-		<true/>
-		<key>CFBundleDevelopmentRegion</key>
-		<string>$(DEVELOPMENT_LANGUAGE)</string>
-		<key>CFBundleDisplayName</key>
-		<string>Confeet Meet</string>
-		<key>CFBundleExecutable</key>
-		<string>$(EXECUTABLE_NAME)</string>
-		<key>CFBundleIdentifier</key>
-		<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-		<key>CFBundleInfoDictionaryVersion</key>
-		<string>6.0</string>
-		<key>CFBundleName</key>
-		<string>Confeet Meet</string>
-		<key>ITSAppUsesNonExemptEncryption</key>
+		<key>UIApplicationSupportsMultipleScenes</key>
 		<false/>
-		<key>CFBundlePackageType</key>
-		<string>APPL</string>
-		<key>CFBundleShortVersionString</key>
-		<string>$(FLUTTER_BUILD_NAME)</string>
-		<key>CFBundleSignature</key>
-		<string>????</string>
-		<key>CFBundleVersion</key>
-		<string>$(FLUTTER_BUILD_NUMBER)</string>
-		<key>LSRequiresIPhoneOS</key>
-		<true/>
-		<key>UIApplicationSceneManifest</key>
+		<key>UISceneConfigurations</key>
 		<dict>
-			<key>UIApplicationSupportsMultipleScenes</key>
-			<false/>
-			<key>UISceneConfigurations</key>
-			<dict>
-				<key>UIWindowSceneSessionRoleApplication</key>
-				<array>
-					<dict>
-						<key>UISceneClassName</key>
-						<string>UIWindowScene</string>
-						<key>UISceneConfigurationName</key>
-						<string>flutter</string>
-						<key>UISceneDelegateClassName</key>
-						<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
-						<key>UISceneStoryboardFile</key>
-						<string>Main</string>
-					</dict>
-				</array>
-			</dict>
+			<key>UIWindowSceneSessionRoleApplication</key>
+			<array>
+				<dict>
+					<key>UISceneClassName</key>
+					<string>UIWindowScene</string>
+					<key>UISceneConfigurationName</key>
+					<string>flutter</string>
+					<key>UISceneDelegateClassName</key>
+					<string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+					<key>UISceneStoryboardFile</key>
+					<string>Main</string>
+				</dict>
+			</array>
 		</dict>
-		<key>UIApplicationSupportsIndirectInputEvents</key>
-		<true/>
-		<key>UILaunchStoryboardName</key>
-		<string>LaunchScreen</string>
-		<key>UIMainStoryboardFile</key>
-		<string>Main</string>
-		<key>UISupportedInterfaceOrientations</key>
-		<array>
-			<string>UIInterfaceOrientationPortrait</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
-		</array>
-		<key>UISupportedInterfaceOrientations~ipad</key>
-		<array>
-			<string>UIInterfaceOrientationPortrait</string>
-			<string>UIInterfaceOrientationPortraitUpsideDown</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
-		</array>
-		<key>UIStatusBarHidden</key>
-		<true/>
-		<key>UIViewControllerBasedStatusBarAppearance</key>
-		<false/>
 	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>voip</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
 </plist>

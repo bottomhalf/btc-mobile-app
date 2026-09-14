@@ -30,7 +30,7 @@ class AppConfig {
   final int connectionTimeout;
   final bool enableLogs;
   final String socketHandshakEndpoint;
-  final String defaultUserImage;
+  final String defaultUserImage = "assets/images/user.jpg";
   final String imageBaseUrl;
 
   AppConfig._({
@@ -43,7 +43,6 @@ class AppConfig {
     required this.enableLogs,
     required this.socketHandshakEndpoint,
     required this.imageBaseUrl,
-    this.defaultUserImage = "assets/images/user.jpg",
   });
 
   // ─── Initializer ───────────────────────────────────────────────

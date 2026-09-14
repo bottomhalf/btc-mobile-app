@@ -170,8 +170,6 @@ class HttpService {
       );
     }
 
-    Object? lastError;
-
     for (int attempt = 1; attempt <= _maxRetryAttempts; attempt++) {
       try {
         debugPrint('Token refresh attempt $attempt/$_maxRetryAttempts');
@@ -208,7 +206,6 @@ class HttpService {
         // Success — exit the retry loop
         return;
       } catch (e) {
-        lastError = e;
         debugPrint('Token refresh attempt $attempt failed: $e');
 
         // Wait briefly before retrying (skip delay on last attempt)

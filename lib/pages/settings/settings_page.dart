@@ -31,7 +31,7 @@ class SettingsPage extends StatelessWidget {
               const SizedBox(height: 24),
               Center(
                 child: Text(
-                  'Confeet Meet v1.0.0',
+                  'Confeet v1.0.0',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppTheme.textSecondary(context).withValues(alpha: 0.6),
@@ -156,19 +156,6 @@ class SettingsPage extends StatelessWidget {
             iconColor: Colors.orangeAccent,
             onTap: () => _handleLogout(context),
           ),
-          Divider(
-            color: AppTheme.divider(context).withValues(alpha: 0.5),
-            height: 1,
-            indent: 60,
-          ),
-          _buildSettingsTile(
-            context,
-            icon: Icons.delete_forever_rounded,
-            title: 'Delete Account',
-            textColor: Colors.redAccent,
-            iconColor: Colors.redAccent,
-            onTap: () => _showDeleteAccountDialog(context),
-          ),
         ],
       ),
     );
@@ -188,7 +175,7 @@ class SettingsPage extends StatelessWidget {
           ),
         ),
         content: Text(
-          'Are you sure you want to log out of Confeet Meet?',
+          'Are you sure you want to log out of Confeet?',
           style: TextStyle(color: AppTheme.textSecondary(context)),
         ),
         actions: [
@@ -215,78 +202,6 @@ class SettingsPage extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteAccountDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppTheme.card(context),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent, size: 24),
-            SizedBox(width: 8),
-            Text(
-              'Delete Account',
-              style: TextStyle(
-                color: Colors.redAccent,
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to permanently delete your account?\n\n'
-          'All your profile data, chat logs, call history, and access tokens stored on this device will be immediately deleted. '
-          'Your account deletion request will be submitted in compliance with Apple privacy guidelines.\n\n'
-          'This action cannot be undone.',
-          style: TextStyle(
-            color: AppTheme.textSecondary(context),
-            fontSize: 13,
-            height: 1.4,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppTheme.textSecondary(context)),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () async {
-              Navigator.of(ctx).pop();
-              try {
-                await MeetingService.instance.leaveMeeting();
-              } catch (_) {}
-              await StorageService.instance.clearAll();
-              Get.offAllNamed('/login');
-              Get.snackbar(
-                'Account Deletion Requested',
-                'Your account and personal data have been erased from this device.',
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: Colors.redAccent,
-                colorText: Colors.white,
-                margin: const EdgeInsets.all(16),
-                borderRadius: 12,
-                duration: const Duration(seconds: 4),
-              );
-            },
-            child: const Text('Delete Permanently'),
           ),
         ],
       ),

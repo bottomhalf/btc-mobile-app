@@ -34,39 +34,31 @@ class MobileMainPage extends GetView<MainController> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: isDark ? null : AppTheme.card(context),
+          color: isDark ? const Color(0xFF13131A) : AppTheme.card(context),
           gradient: isDark
               ? const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF222228),
-                    Color(0xFF121216),
-                    Color(0xFF09090C),
+                    Color(0xFF16161D),
+                    Color(0xFF111116),
                   ],
-                  stops: [0.0, 0.35, 1.0],
                 )
               : null,
           border: Border(
             top: BorderSide(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.18)
+                  ? Colors.white.withValues(alpha: 0.08)
                   : AppTheme.divider(context).withValues(alpha: 0.35),
               width: 1,
             ),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.05),
-              blurRadius: isDark ? 14 : 8,
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.05),
+              blurRadius: 8,
               offset: const Offset(0, -2),
             ),
-            if (isDark)
-              BoxShadow(
-                color: Colors.white.withValues(alpha: 0.04),
-                blurRadius: 1,
-                offset: const Offset(0, -1),
-              ),
           ],
         ),
         child: SafeArea(

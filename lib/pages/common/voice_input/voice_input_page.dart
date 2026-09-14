@@ -107,7 +107,7 @@ class _VoiceInputPageState extends State<VoiceInputPage> with SingleTickerProvid
           }
         });
       },
-      listenFor: const Duration(seconds: 60),
+      listenOptions: SpeechListenOptions(listenFor: const Duration(seconds: 60)),
     );
   }
 

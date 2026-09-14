@@ -62,7 +62,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   icon: Icons.info_outline_rounded,
                   title: '1. Introduction',
                   content:
-                      'Confeet Meet ("we", "our", or "us") provides a modern enterprise communication platform for HD video conferencing, crystal-clear audio calls, real-time collaboration, and messaging. This Privacy Policy explains how we collect, use, process, and protect your information when you access or use the Confeet Meet mobile and desktop applications.\n\nBy using Confeet Meet, you consent to the data collection and practices described in this policy. If you do not agree, please discontinue use of the service.',
+                      'Confeet ("we", "our", or "us") provides a modern enterprise communication platform for HD video conferencing, crystal-clear audio calls, real-time collaboration, and messaging. This Privacy Policy explains how we collect, use, process, and protect your information when you access or use the Confeet mobile and desktop applications.\n\nBy using Confeet, you consent to the data collection and practices described in this policy. If you do not agree, please discontinue use of the service.',
                 ),
                 const SizedBox(height: 16),
 
@@ -86,7 +86,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   icon: Icons.security_rounded,
                   title: '3. Device Permissions & Usage',
                   content:
-                      'To enable meeting functionalities, Confeet Meet requests specific device permissions. Each permission is used solely for its declared purpose:\n\n'
+                      'To enable meeting functionalities, Confeet requests specific device permissions. Each permission is used solely for its declared purpose:\n\n'
                       '• Camera (NSCameraUsageDescription): Required to broadcast video during meetings when you switch your camera on. You can mute your camera at any time.\n'
                       '• Microphone (NSMicrophoneUsageDescription): Required to transmit your voice during audio/video calls and enable speech recognition when activated.\n'
                       '• Bluetooth (NSBluetoothAlwaysUsageDescription): Required to route crystal-clear meeting audio to your Bluetooth headsets, AirPods, and external speakers.\n'
@@ -101,7 +101,7 @@ class PrivacyPolicyPage extends StatelessWidget {
                   icon: Icons.lock_outline_rounded,
                   title: '4. Security & Encryption Standards',
                   content:
-                      'Protecting your communication is central to Confeet Meet:\n\n'
+                      'Protecting your communication is central to Confeet:\n\n'
                       '• All real-time media streams (audio, video, screen share) are transmitted over encrypted WebRTC channels using DTLS and SRTP.\n'
                       '• Data in transit between your device and Confeet servers is secured using modern TLS 1.3 / HTTPS encryption.\n'
                       '• Authentication tokens and user credentials are saved securely using hardware-backed platform storage (iOS Keychain and Android Keystore) via Flutter Secure Storage.\n'
@@ -192,7 +192,7 @@ class PrivacyPolicyPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Confeet Meet',
+                  'Confeet',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,

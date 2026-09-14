@@ -138,7 +138,7 @@ class DesktopSideMenu extends GetView<MainController> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Confeet Meet',
+                'Confeet',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

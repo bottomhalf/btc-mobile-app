@@ -21,13 +21,10 @@ class VideoViewer extends StatefulWidget {
 }
 
 class _VideoViewerState extends State<VideoViewer> {
-  // late VideoPlayerController _controller;
-  late Future<void> _initializeVideoPlayerFuture;
   final controller = Get.find<FileViewerController>();
 
   bool isPlaying = false;
   bool isUploading = false;
-  final Duration _videoPosition = Duration.zero;
   late FlickManager _flickManager;
 
   @override
@@ -92,15 +89,6 @@ class _VideoViewerState extends State<VideoViewer> {
   //     _onVideoCompleted();
   //   }
   // }
-
-  // Callback for when the video completes
-  void _onVideoCompleted() {
-    debugPrint("Video has completed playing.");
-
-    setState(() {
-      isPlaying = false;
-    });
-  }
 
   String convertIntoTwoDigitDecimal(String minutes, String seconds) {
     if (minutes.length == 1) {

@@ -6,7 +6,7 @@
     "livekitUrl": "www.confeet.com",
     "port": 443,
     "connectionTimeout": 15,
-    "enableLogs": true,
+    "enableLogs": false,
     "socketHandshakEndpoint": "wss",
     "heartbeatInterval": 30000,
     "imageBaseUrl": "https://rs.confeet.com/"

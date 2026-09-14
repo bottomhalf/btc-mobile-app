@@ -6,7 +6,7 @@ import '../../../../models/participant.dart';
 import '../../../../models/quick_meetings.dart';
 import '../../../../models/user_model.dart';
 import '../../../../services/http_service.dart';
-import '../../../calendar/sub_pages/meet_calendar/meet_calendar_controller.dart';
+import '../../../calendar/calendar_controller.dart';
 import '../../../team/service/chat_service.dart';
 import '../../meet_controller.dart';
 
@@ -338,8 +338,8 @@ class ScheduleMeetingController extends GetxController {
 
   void updateCalendar() {
     if (scheduledMeeting.value == null) return;
-    if (Get.isRegistered<MeetCalendarController>()) {
-      Get.find<MeetCalendarController>().addEventFromMeeting(scheduledMeeting.value!);
+    if (Get.isRegistered<CalendarController>()) {
+      Get.find<CalendarController>().addEventFromMeeting(scheduledMeeting.value!);
     }
   }
 

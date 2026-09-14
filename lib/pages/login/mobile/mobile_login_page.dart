@@ -64,15 +64,15 @@ class MobileLoginPage extends GetView<LoginController> {
                           ),
                         ],
                 ),
-                child: IconButton(
-                  icon: Icon(
-                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                    color: isDark ? const Color(0xFFFBBF24) : _richIndigo,
-                    size: 20,
-                  ),
-                  tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
-                  onPressed: ThemeService.instance.toggleTheme,
-                ),
+                // child: IconButton(
+                //   icon: Icon(
+                //     isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                //     color: isDark ? const Color(0xFFFBBF24) : _richIndigo,
+                //     size: 20,
+                //   ),
+                //   tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                //   onPressed: ThemeService.instance.toggleTheme,
+                // ),
               ),
             ),
 

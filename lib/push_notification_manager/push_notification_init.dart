@@ -1,8 +1,10 @@
 import 'package:conference/push_notification_manager/push_notification.dart';
 import 'package:conference/push_notification_manager/push_notification_snack.dart';
+import 'package:conference/push_notification_manager/service/notification_handler_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:overlay_support/overlay_support.dart';
 
 import 'firebase_options.dart';
@@ -72,12 +74,25 @@ class PushNotificationInit {
       // init local notification
       await PushNotifications.localNotificationInit();
 
+      // Listen to token refresh asynchronously
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+        debugPrint("Firebase onTokenRefresh event received: $newToken");
+        PushNotifications.saveToken(newToken);
+      });
+
       // Listen to background notification
       FirebaseMessaging.onBackgroundMessage(_firebaseBackgroundMessage);
 
       // Listen to foreground notification
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint("Got a message on foreground");
+        if (Get.isRegistered<NotificationHandlerService>()) {
+          final service = Get.find<NotificationHandlerService>();
+          if (!service.isNotificationsEnabled.value) {
+            debugPrint("Notification suppressed because user disabled notifications in settings.");
+            return;
+          }
+        }
         if (message.notification != null) {
           showTopNotification(message.notification, message.data);
         }

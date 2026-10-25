@@ -1,3 +1,4 @@
+import 'package:conference/push_notification_manager/service/notification_handler_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../services/http_service.dart';
@@ -20,6 +21,7 @@ class SplashController extends GetxController {
 
     if (isAuthenticated) {
       debugPrint('Auto-login successful — navigating to home');
+      Get.find<NotificationHandlerService>().initNotificationIfGranted();
       Get.offNamed('/main');
     } else {
       debugPrint('Auto-login failed — navigating to login');

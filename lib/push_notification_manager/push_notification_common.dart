@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:conference/models/user_model.dart';
+
+import 'package:conference/core/storage/storage.dart';
 import 'package:conference/pages/notification/notification_controller.dart';
 import 'package:conference/pages/notification/notification_page.dart';
 import 'package:conference/push_notification_manager/models/notification_model.dart';
@@ -8,9 +11,11 @@ import 'package:conference/push_notification_manager/push_notification.dart';
 import 'package:conference/push_notification_manager/service/notification_handler_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+import 'package:conference/models/api_response.dart';
+import 'package:conference/services/http_service.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// Common Push Notification Coordinator (Shared cross-platform logic)
@@ -38,17 +43,134 @@ class PushNotifications {
       debugPrint("User denied notification permission");
     }
 
-    String? token;
-    if (Platform.isIOS) {
-      token = await PushNotificationIOS.getToken();
-    } else {
-      token = await PushNotificationAndroid.getToken();
-    }
+    String? token = await fetchAndSaveToken();
+    return token;
+  }
 
-    if (token != null) {
-      final handlerService = Get.put(NotificationHandlerService());
-      handlerService.setDeviceId = token;
-      debugPrint("Device token: $token");
+  /// Saves device token to NotificationHandlerService and persistent local storage
+  static Future<void> saveToken(String token) async {
+    if (token.isNotEmpty) {
+      if (Get.isRegistered<NotificationHandlerService>()) {
+        Get.find<NotificationHandlerService>().setDeviceId = token;
+      }
+      await StorageService.instance.setValue('fcm_device_token', token);
+      debugPrint("Device token successfully saved: $token");
+
+      // Send deviceId and deviceType to backend
+      await updateDeviceToken(token);
+    }
+  }
+
+  /// Send device id and device type to the backend server
+  /// Endpoint: /api/auth/v2/updateDeviceToken
+  static Future<void> updateDeviceToken(String token) async {
+    try {
+      final user = UserModel.instance;
+      final dynamic rawUser = StorageService.instance.getValue('user');
+      final Map<String, dynamic> userMap =
+          rawUser is Map ? Map<String, dynamic>.from(rawUser) : {};
+
+      final String deviceType = Platform.isAndroid
+          ? 'android'
+          : Platform.isIOS
+              ? 'ios'
+              : (Platform.isWindows
+                  ? 'windows'
+                  : (Platform.isMacOS ? 'macos' : 'linux'));
+
+      final Map<String, dynamic> payload = {
+        'loginId': userMap['loginId']?.toString(),
+        'email': user.email.isNotEmpty
+            ? user.email
+            : (userMap['email']?.toString() ?? ''),
+        'password': userMap['password']?.toString(),
+        'userId': user.userId.isNotEmpty
+            ? user.userId
+            : (userMap['userId']?.toString() ?? ''),
+        'firstName': user.firstName.isNotEmpty
+            ? user.firstName
+            : (userMap['firstName']?.toString() ?? ''),
+        'lastName': user.lastName.isNotEmpty
+            ? user.lastName
+            : (userMap['lastName']?.toString() ?? ''),
+        'code': user.code.isNotEmpty
+            ? user.code
+            : (userMap['code']?.toString() ?? ''),
+        'deviceId': token,
+        'deviceType': deviceType,
+        'isNotificationEnabled': true,
+        'isActive': true,
+      };
+
+      debugPrint("Sending updateDeviceToken request to /api/auth/v2/updateDeviceToken: $payload");
+
+      final dynamic response = await HttpService.instance.post(
+        '/api/auth/v2/updateDeviceToken',
+        body: payload,
+      );
+
+      final bool isSuccess = (response is ApiResponse && response.isOk) ||
+          (response is Response && response.isOk) ||
+          (response != null && response.isSuccess == true);
+
+      if (isSuccess) {
+        debugPrint("Device token successfully updated on backend.");
+        Get.snackbar(
+          'Success',
+          'Push notifications enabled successfully',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFF10B981),
+          colorText: Colors.white,
+          icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        debugPrint("Fail to enable the push notification.");
+        Get.snackbar(
+          'Error',
+          'Failed to enable push notifications',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFEF4444),
+          colorText: Colors.white,
+          icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } catch (e) {
+      debugPrint("Failed to update device token on backend: $e");
+      Get.snackbar(
+        'Error',
+        'Failed to enable push notifications: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: const Color(0xFFEF4444),
+        colorText: Colors.white,
+        icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
+
+  /// Explicitly retrieve and store the device token across Android/iOS
+  static Future<String?> fetchAndSaveToken() async {
+    String? token;
+    try {
+      if (Platform.isIOS) {
+        token = await PushNotificationIOS.getToken();
+      } else {
+        token = await PushNotificationAndroid.getToken();
+      }
+
+      if (token != null && token.isNotEmpty) {
+        await saveToken(token);
+      }
+    } catch (e) {
+      debugPrint("Error fetching device token: $e");
     }
     return token;
   }
@@ -111,14 +233,22 @@ class PushNotifications {
   ) async {
     final Directory directory = await getTemporaryDirectory();
     final String filePath = '${directory.path}/$fileName';
-    final http.Response response = await http.get(Uri.parse(url));
+    final Uint8List bytes = await HttpService.instance.getBytes(url);
     final File file = File(filePath);
-    await file.writeAsBytes(response.bodyBytes);
+    await file.writeAsBytes(bytes);
     return filePath;
   }
 
   /// Display a custom local notification with Android and iOS specific builders
   static Future<void> showNotification(RemoteMessage message) async {
+    if (Get.isRegistered<NotificationHandlerService>()) {
+      final service = Get.find<NotificationHandlerService>();
+      if (!service.isNotificationsEnabled.value) {
+        debugPrint("Local notification suppressed because notifications are disabled.");
+        return;
+      }
+    }
+
     final notification = message.notification;
     final data = message.data;
 
@@ -126,7 +256,7 @@ class PushNotifications {
         notification?.title ??
         data['title'] ??
         data['fullName'] ??
-        'Hiringbell';
+        'Confeet';
     final String body =
         notification?.body ?? data['body'] ?? data['description'] ?? '';
     final int notificationId =

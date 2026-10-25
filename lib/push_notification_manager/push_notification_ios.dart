@@ -25,8 +25,14 @@ class PushNotificationIOS {
     );
   }
 
-  /// Retrieve iOS APNS device token
+  /// Retrieve iOS device token (FCM registration token with APNS fallback)
   static Future<String?> getToken() async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        return fcmToken;
+      }
+    } catch (_) {}
     return await FirebaseMessaging.instance.getAPNSToken();
   }
 }

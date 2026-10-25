@@ -1,5 +1,7 @@
 import 'package:conference/core/storage/storage.dart';
 import 'package:conference/models/user_model.dart';
+import 'package:conference/push_notification_manager/push_notification.dart';
+import 'package:conference/push_notification_manager/service/notification_handler_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -39,6 +41,16 @@ class LoginController extends GetxController {
         // Correctly update the singleton state using updateFromJson
         UserModel.instance.updateFromJson(responseBody);
         debugPrint('Login success: $responseBody');
+
+        // Enable notification
+        Get.find<NotificationHandlerService>().initNotificationIfGranted();
+
+        // Sync device token to backend if token already exists
+        final deviceToken = _storage.getValue<String>('fcm_device_token');
+        if (deviceToken != null && deviceToken.isNotEmpty) {
+          PushNotifications.updateDeviceToken(deviceToken);
+        }
+
         Get.offAllNamed('/main');
       }
     } on ApiException catch (e) {
@@ -158,7 +170,9 @@ class LoginController extends GetxController {
           ElevatedButton.icon(
             onPressed: () {
               Navigator.of(context).pop();
-              Clipboard.setData(const ClipboardData(text: 'support@confeet.com'));
+              Clipboard.setData(
+                const ClipboardData(text: 'support@confeet.com'),
+              );
               Get.snackbar(
                 'Email Copied',
                 'support@confeet.com copied to clipboard',
@@ -201,15 +215,15 @@ class LoginController extends GetxController {
       duration: const Duration(seconds: 3),
     );
   }
-  //
-  // @override
-  // void onInit() {
-  //   emailCtrl.text = "testuser@test.com";
-  //   passwordCtrl.text = "BYodEgFb";
-  //
-  //   // TODO: implement onInit
-  //   super.onInit();
-  // }
+
+  @override
+  void onInit() {
+    emailCtrl.text = "istiyaq.mi9@gmail.com";
+    passwordCtrl.text = "istiyak";
+    //
+    // TODO: implement onInit
+    super.onInit();
+  }
 
   @override
   void onClose() {

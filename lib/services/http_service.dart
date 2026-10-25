@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:conference/core/storage/secure_storage_service.dart';
 import 'package:conference/models/user_model.dart';
 import 'package:flutter/material.dart';
@@ -86,8 +87,16 @@ class HttpService {
     if (_authToken != null) 'Authorization': 'Bearer $_authToken',
   };
 
-  Uri _uri(String path, [Map<String, String>? queryParams]) =>
-      Uri.parse('$_baseUrl$path').replace(queryParameters: queryParams);
+  Uri _uri(String path, [Map<String, String>? queryParams]) {
+    String cleanPath = path;
+    if (_baseUrl.endsWith('/') && cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1);
+    }
+    if (_baseUrl.endsWith('/api/') && cleanPath.startsWith('api/')) {
+      cleanPath = cleanPath.substring(4);
+    }
+    return Uri.parse('$_baseUrl$cleanPath').replace(queryParameters: queryParams);
+  }
 
   void _log(String method, String path, int statusCode) {
     if (AppConfig.instance.enableLogs) {
@@ -391,5 +400,23 @@ class HttpService {
   }
 
   /// Dispose the underlying HTTP client.
+  /// Download binary bytes from an absolute URL or path (e.g. for notification media).
+  Future<Uint8List> getBytes(String url) async {
+    final uri = url.startsWith('http://') || url.startsWith('https://')
+        ? Uri.parse(url)
+        : _uri(url);
+    final response = await _client.get(uri).timeout(_timeout);
+    _log('GET (bytes)', uri.toString(), response.statusCode);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return response.bodyBytes;
+    }
+
+    throw ApiException(
+      message: 'Failed to download file (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
+  }
+
   void dispose() => _client.close();
 }

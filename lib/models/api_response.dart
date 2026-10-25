@@ -51,6 +51,7 @@ class ApiResponse {
 
   /// Whether the API call was logically successful.
   bool get success => isSuccess == true;
+  bool get isOk => isSuccess == true && httpStatusCode >= 200 && httpStatusCode < 300;
 
   /// Human-readable error string — prefers [errorMessage], falls back to
   /// [message], then [httpStatusMessage].

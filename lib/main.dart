@@ -52,7 +52,7 @@ void main() async {
   await HttpService.instance.initialize();
 
   // Register Notification handler service
-  var handler = Get.put(NotificationHandlerService(), permanent: true);
+  Get.put(NotificationHandlerService(), permanent: true);
 
   // Register Notification handler service
   Get.put(NotificationController(), permanent: true);
@@ -73,8 +73,6 @@ void main() async {
       ),
     ),
   );
-
-  await handler.initNotificationConfigure();
 }
 
 class MyApp extends StatelessWidget {

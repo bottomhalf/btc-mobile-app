@@ -1,7 +1,7 @@
 import 'package:conference/pages/common/image_viewer/widget/file_loader.dart';
 import 'package:conference/pages/notification/notification_controller.dart';
 import 'package:conference/pages/notification/notification_page.dart';
-import 'package:conference/push_notification_manager/models/notification_model.dart';
+import 'package:conference/push_notification_manager/models/notification_event.dart';
 import 'package:conference/push_notification_manager/service/notification_handler_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ class PushNotificationSnack extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
-    final notification = NotificationModel.fromJson(message);
+    final notification = NotificationEvent.fromJson(message);
     final handlerService = Get.put(NotificationHandlerService());
 
     return SafeArea(
@@ -59,7 +59,7 @@ class PushNotificationSnack extends StatelessWidget {
                   OverlaySupportEntry.of(context)?.dismiss(animate: true);
                   try {
                     notification.time ??= DateTime.now();
-                    NotificationModel.addNotification(notification);
+                    NotificationEvent.addNotification(notification);
 
                     if (!Get.isRegistered<NotificationController>()) {
                       Get.put(NotificationController());
@@ -68,7 +68,7 @@ class PushNotificationSnack extends StatelessWidget {
                     await Get.to(
                       () => const NotificationPage(),
                       arguments: {
-                        'postId': notification.jobPostId,
+                        'postId': notification.type,
                         'isApplied': false,
                         'appliedOn': null,
                       },
@@ -137,7 +137,7 @@ class PushNotificationSnack extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  notification.fullName ??
+                                  notification.senderName ??
                                       "Confeet notification",
                                   style: TextStyle(
                                     color: Colors.white,
@@ -360,7 +360,7 @@ class PushNotificationSnack extends StatelessWidget {
     return FileLoader.loadImage(fileUrl: url);
   }
 
-  Widget _bindNotificationWall(NotificationModel notification) {
+  Widget _bindNotificationWall(NotificationEvent notification) {
     return FileLoader.loadImage(fileUrl: notification.imageUrl);
   }
 }

@@ -470,7 +470,7 @@ class ScheduleMeetingPage extends GetView<ScheduleMeetingController> {
 
     final shareText = '''
 Join my scheduled meeting:
-Topic: ${meeting.title}
+Topic: ${meeting.messageId}
 Date & Time: $fullDate
 Meeting ID: ${meeting.meetingId}
 Password: ${meeting.meetingPassword}
@@ -536,7 +536,7 @@ Password: ${meeting.meetingPassword}
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  meeting.title,
+                  meeting.messageId,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

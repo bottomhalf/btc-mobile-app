@@ -6,7 +6,7 @@ import 'package:conference/models/user_model.dart';
 import 'package:conference/core/storage/storage.dart';
 import 'package:conference/pages/notification/notification_controller.dart';
 import 'package:conference/pages/notification/notification_page.dart';
-import 'package:conference/push_notification_manager/models/notification_model.dart';
+import 'package:conference/push_notification_manager/models/notification_event.dart';
 import 'package:conference/push_notification_manager/push_notification.dart';
 import 'package:conference/push_notification_manager/service/notification_handler_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -205,11 +205,11 @@ class PushNotifications {
   ) async {
     final payload = notificationResponse.payload;
     if (payload != null && payload.isNotEmpty) {
-      final notification = NotificationModel.fromJson(payload);
+      final notification = NotificationEvent.fromJson(payload);
 
       // Add this notification in the global notification list
       notification.time ??= DateTime.now();
-      NotificationModel.addNotification(notification);
+      NotificationEvent.addNotification(notification);
 
       if (!Get.isRegistered<NotificationController>()) {
         Get.put(NotificationController());
@@ -218,7 +218,7 @@ class PushNotifications {
       await Get.to(
         () => const NotificationPage(),
         arguments: {
-          'postId': notification.jobPostId,
+          'postId': notification.type,
           'isApplied': false,
           'appliedOn': null,
         },

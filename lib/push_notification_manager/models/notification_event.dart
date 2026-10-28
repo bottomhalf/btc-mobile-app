@@ -1,24 +1,21 @@
 import 'dart:convert';
 import 'package:get/get.dart';
 
-typedef PushNotificationModel = NotificationModel;
-typedef PushnotificationModel = NotificationModel;
+class NotificationEvent {
+  static final RxList<NotificationEvent> globalNotifications =
+      <NotificationEvent>[].obs;
 
-class NotificationModel {
-  static final RxList<NotificationModel> globalNotifications =
-      <NotificationModel>[].obs;
-
-  static void addNotification(NotificationModel notification) {
+  static void addNotification(NotificationEvent notification) {
     notification.time ??= DateTime.now();
 
     final int index = globalNotifications.indexWhere((item) {
-      if (notification.jobPostId != 0 && item.jobPostId != 0) {
-        return item.jobPostId == notification.jobPostId;
+      if (notification.type != null) {
+        return item.type == notification.type;
       }
-      if (notification.title != null &&
-          notification.title!.isNotEmpty &&
-          notification.title == item.title &&
-          notification.description == item.description) {
+      if (notification.messageId != null &&
+          notification.messageId!.isNotEmpty &&
+          notification.messageId == item.messageId &&
+          notification.senderId == item.senderId) {
         return true;
       }
       return false;
@@ -34,43 +31,30 @@ class NotificationModel {
     globalNotifications.refresh();
   }
 
-  int rowIndex;
-  int followerId; // subscriber - who subscribed my channel
-  int followedId; // to whome I am following
-  int jobPostId;
+  String? type;
   String? imageUrl;
-  String? email;
-  String? title;
-  String? description;
-  String? fullName;
-  String? deviceId;
+  String? conversationId;
+  String? messageId;
+  String? senderId;
+  String? senderName;
+  String? content;
   DateTime? time;
-  String? notificationType;
   bool isRead;
 
-  NotificationModel({
-    this.rowIndex = 0,
-    this.followerId = 0,
-    this.followedId = 0,
-    this.jobPostId = 0,
+  NotificationEvent({
+    this.type,
     this.imageUrl,
-    this.email,
-    this.title,
-    this.description,
-    this.fullName,
-    this.deviceId,
+    this.conversationId,
+    this.messageId,
+    this.senderId,
+    this.senderName,
+    this.content,
     this.time,
-    this.notificationType,
     this.isRead = false,
   });
 
-  factory NotificationModel.noArgs() {
-    return NotificationModel(
-      rowIndex: 0,
-      followerId: 0,
-      followedId: 0,
-      jobPostId: 0,
-    );
+  factory NotificationEvent.noArgs() {
+    return NotificationEvent();
   }
 
   static int _toInt(dynamic val) {
@@ -112,18 +96,15 @@ class NotificationModel {
     }
 
     final keys = [
-      'rowIndex',
-      'followerId',
-      'followedId',
-      'jobPostId',
+      'type',
       'imageUrl',
-      'email',
-      'title',
-      'description',
-      'fullName',
-      'deviceId',
+      'conversationId',
+      'messageId',
+      'senderId',
+      'senderName',
+      'content',
       'time',
-      'notificationType'
+      'isRead',
     ];
 
     final List<MapEntry<String, int>> positions = [];
@@ -153,8 +134,8 @@ class NotificationModel {
     return result;
   }
 
-  factory NotificationModel.fromJson(dynamic json) {
-    if (json == null) return NotificationModel.noArgs();
+  factory NotificationEvent.fromJson(dynamic json) {
+    if (json == null) return NotificationEvent.noArgs();
 
     Map<String, dynamic> jsonMap;
     if (json is Map<String, dynamic>) {
@@ -164,40 +145,32 @@ class NotificationModel {
     } else if (json is String) {
       jsonMap = _parsePayloadString(json);
     } else {
-      return NotificationModel.noArgs();
+      return NotificationEvent.noArgs();
     }
 
-    return NotificationModel(
-      rowIndex: _toInt(jsonMap['rowIndex']),
-      followerId: _toInt(jsonMap['followerId']),
-      followedId: _toInt(jsonMap['followedId']),
-      jobPostId: _toInt(jsonMap['jobPostId'] ?? jsonMap['postId']),
-      imageUrl: _toString(jsonMap['imageUrl'] ?? jsonMap['imageURL'] ?? jsonMap['profileImage']),
-      email: _toString(jsonMap['email']),
-      title: _toString(jsonMap['title']),
-      description: _toString(jsonMap['description'] ?? jsonMap['body']),
-      fullName: _toString(jsonMap['fullName']),
-      deviceId: _toString(jsonMap['deviceId']),
+    return NotificationEvent(
+      type: _toString(jsonMap['type']),
+      imageUrl: _toString(jsonMap['imageUrl']),
+      conversationId: _toString(jsonMap['conversationId']),
+      messageId: _toString(jsonMap['messageId']),
+      senderId: _toString(jsonMap['senderId']),
+      senderName: _toString(jsonMap['fullName']),
+      content: _toString(jsonMap['deviceId']),
       time: _parseTime(jsonMap['time']),
-      notificationType: _toString(jsonMap['notificationType']),
       isRead: jsonMap['isRead'] == true || jsonMap['isRead'] == 'true',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'rowIndex': rowIndex,
-      'followerId': followerId,
-      'followedId': followedId,
-      'jobPostId': jobPostId,
+      'type': type,
       'imageUrl': imageUrl,
-      'email': email,
-      'title': title,
-      'description': description,
-      'fullName': fullName,
-      'deviceId': deviceId,
+      'conversationId': conversationId,
+      'messageId': messageId,
+      'senderId': senderId,
+      'senderName': senderName,
+      'content': content,
       'time': time?.millisecondsSinceEpoch.toString(),
-      'notificationType': notificationType,
       'isRead': isRead,
     };
   }

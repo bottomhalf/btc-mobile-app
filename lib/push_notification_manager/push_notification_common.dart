@@ -252,13 +252,63 @@ class PushNotifications {
     final notification = message.notification;
     final data = message.data;
 
-    final String title =
+    // Detect event type (matches backend push notification builder)
+    final String eventType = (data['event'] ?? data['type'] ?? '').toString();
+    final bool isIncomingCall = eventType == 'call:incoming' ||
+        eventType == 'call_incoming' ||
+        eventType == 'call:invite';
+    final bool isMissedCall = eventType == 'call:missed' ||
+        eventType == 'call_missed' ||
+        eventType == 'call:timed_out' ||
+        eventType == 'call:timeout' ||
+        eventType == 'call:cancelled' ||
+        eventType == 'call_cancelled';
+
+    // Resolve conversation / thread ID
+    String? convId;
+    if (data['conversationId'] != null &&
+        data['conversationId'].toString().isNotEmpty) {
+      convId = data['conversationId'].toString();
+    } else if (data['conversation_id'] != null &&
+        data['conversation_id'].toString().isNotEmpty) {
+      convId = data['conversation_id'].toString();
+    }
+
+    // Determine notification tag matching backend logic
+    String? tag;
+    if (isIncomingCall) {
+      tag = (convId != null && convId.isNotEmpty) ? 'call_$convId' : 'call_incoming';
+    } else if (isMissedCall) {
+      tag = (convId != null && convId.isNotEmpty) ? 'missed_$convId' : 'call_missed';
+    } else if (convId != null && convId.isNotEmpty) {
+      tag = convId;
+    }
+
+    final String? channelOverride =
+        data['channelId']?.toString() ?? data['channel_id']?.toString();
+
+    String title =
         notification?.title ??
         data['title'] ??
+        data['conversationName'] ??
+        data['senderName'] ??
         data['fullName'] ??
         'Confeet';
-    final String body =
-        notification?.body ?? data['body'] ?? data['description'] ?? '';
+    if (title.trim().isEmpty || title.toLowerCase() == 'hiringbell') {
+      title = 'Confeet';
+    } else if (title.toLowerCase().contains('hiringbell')) {
+      title = title.replaceAll(RegExp(r'hiringbell', caseSensitive: false), 'Confeet');
+    }
+
+    String body =
+        notification?.body ??
+        data['body'] ??
+        data['description'] ??
+        data['content'] ??
+        '';
+    if (body.toLowerCase().contains('hiringbell')) {
+      body = body.replaceAll(RegExp(r'hiringbell', caseSensitive: false), 'Confeet');
+    }
     final int notificationId =
         notification?.hashCode ?? message.messageId.hashCode;
 
@@ -283,11 +333,19 @@ class PushNotifications {
           title: title,
           body: body,
           largeIconPath: largeIconPath,
+          isIncomingCall: isIncomingCall,
+          isMissedCall: isMissedCall,
+          channelIdOverride: channelOverride,
+          tag: tag,
         );
 
     final DarwinNotificationDetails iosDetails =
         PushNotificationIOS.buildNotificationDetails(
           attachmentPath: largeIconPath,
+          categoryIdentifier: isIncomingCall
+              ? 'INCOMING_CALL'
+              : (isMissedCall ? 'MISSED_CALL' : 'MESSAGE_REPLY'),
+          threadIdentifier: convId,
         );
 
     final NotificationDetails platformChannelSpecifics = NotificationDetails(

@@ -123,7 +123,7 @@ class PushNotificationSnack extends StatelessWidget {
                                     shape: BoxShape.circle,
                                   ),
                                   child: Image.asset(
-                                    'assets/blue_collar_icon.png',
+                                    'assets/images/logo.png',
                                     width: 16,
                                     height: 16,
                                     errorBuilder:
@@ -137,7 +137,7 @@ class PushNotificationSnack extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  notification.senderName ??
+                                  _clean(notification.senderName) ??
                                       "Confeet notification",
                                   style: TextStyle(
                                     color: Colors.white,
@@ -210,7 +210,7 @@ class PushNotificationSnack extends StatelessWidget {
                                 shape: BoxShape.circle,
                               ),
                               child: Image.asset(
-                                'assets/blue_collar_icon.png',
+                                'assets/images/logo.png',
                                 width: 14,
                                 height: 14,
                                 errorBuilder: (context, error, stackTrace) =>
@@ -223,7 +223,7 @@ class PushNotificationSnack extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              "HIRINGBELL",
+                              "CONFEET",
                               style: TextStyle(
                                 color: primaryColor,
                                 fontSize: 10,
@@ -297,7 +297,7 @@ class PushNotificationSnack extends StatelessWidget {
                                   notification.imageUrl != null &&
                                       notification.imageUrl!.isNotEmpty
                                   ? _getUserProfileImage(notification.imageUrl!)
-                                  : _buildPlaceholderIcon(primaryColor),
+                                  : _buildPlaceholderIcon(),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -308,7 +308,10 @@ class PushNotificationSnack extends StatelessWidget {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  remoteNotification.title ?? "New Update",
+                                  _clean(remoteNotification.title) ??
+                                      _clean(notification.conversationName) ??
+                                      _clean(notification.senderName) ??
+                                      "Confeet",
                                   style: const TextStyle(
                                     fontSize: 13.5,
                                     fontWeight: FontWeight.w700,
@@ -319,7 +322,9 @@ class PushNotificationSnack extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  remoteNotification.body ?? "",
+                                  _clean(remoteNotification.body) ??
+                                      _clean(notification.content) ??
+                                      "",
                                   style: TextStyle(
                                     fontSize: 11.5,
                                     fontWeight: FontWeight.w400,
@@ -345,16 +350,35 @@ class PushNotificationSnack extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholderIcon(Color primaryColor) {
-    final hasPostId = message["postId"] != null;
-    return Icon(
-      hasPostId
-          ? Icons.chat_bubble_outline_rounded
-          : Icons.notifications_none_rounded,
-      color: primaryColor,
-      size: 20,
+
+  Widget _buildPlaceholderIcon() {
+    return Image.asset(
+      'assets/images/logo.png',
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => Image.asset(
+        'assets/images/notification_icon.png',
+        fit: BoxFit.cover,
+      ),
     );
   }
+
+  String? _clean(String? val) {
+    if (val == null) return null;
+    final trimmed = val.trim();
+    if (trimmed.isEmpty) return null;
+    if (trimmed.toLowerCase() == 'hiringbell') return 'Confeet';
+    if (trimmed.toLowerCase().contains('hiringbell')) {
+      return trimmed.replaceAll(
+        RegExp(r'hiringbell', caseSensitive: false),
+        'Confeet',
+      );
+    }
+    return trimmed;
+  }
+
+
+
+
 
   Widget _getUserProfileImage(String url) {
     return FileLoader.loadImage(fileUrl: url);

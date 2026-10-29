@@ -105,6 +105,7 @@ flutter:
   assets:
     - assets/config/
     - assets/images/logo.png
+    - assets/images/notification_icon.png
     - assets/images/illustration.png
     - assets/images/bg.png
     - assets/images/splash_full.png

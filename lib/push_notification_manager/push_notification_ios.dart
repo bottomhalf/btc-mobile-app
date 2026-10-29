@@ -11,9 +11,11 @@ class PushNotificationIOS {
     requestSoundPermission: false,
   );
 
-  /// Build iOS-specific notification details with optional attachment
+  /// Build iOS-specific notification details with optional attachment and categories
   static DarwinNotificationDetails buildNotificationDetails({
     String? attachmentPath,
+    String? categoryIdentifier,
+    String? threadIdentifier,
   }) {
     return DarwinNotificationDetails(
       attachments: attachmentPath != null
@@ -22,6 +24,8 @@ class PushNotificationIOS {
       presentAlert: true,
       presentSound: true,
       presentBadge: true,
+      categoryIdentifier: categoryIdentifier,
+      threadIdentifier: threadIdentifier,
     );
   }
 

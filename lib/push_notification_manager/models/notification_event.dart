@@ -9,13 +9,14 @@ class NotificationEvent {
     notification.time ??= DateTime.now();
 
     final int index = globalNotifications.indexWhere((item) {
-      if (notification.type != null) {
-        return item.type == notification.type;
-      }
       if (notification.messageId != null &&
           notification.messageId!.isNotEmpty &&
-          notification.messageId == item.messageId &&
-          notification.senderId == item.senderId) {
+          notification.messageId == item.messageId) {
+        return true;
+      }
+      if (notification.type != null &&
+          item.type != null &&
+          notification.type == item.type) {
         return true;
       }
       return false;
@@ -31,23 +32,40 @@ class NotificationEvent {
     globalNotifications.refresh();
   }
 
-  String? type;
-  String? imageUrl;
+  // Push notification payload fields
+  String? conversationType;
+  String? createdAt;
+  String? senderName;
+  String? senderId;
+  String? clientType;
+  String? msgType;
+  String? conversationName;
   String? conversationId;
   String? messageId;
-  String? senderId;
-  String? senderName;
+  String? event;
+  String? timestamp;
+
+  // Additional & legacy fields
+  String? type;
+  String? imageUrl;
   String? content;
-  DateTime? time;
   bool isRead;
+  DateTime? time;
 
   NotificationEvent({
-    this.type,
-    this.imageUrl,
+    this.conversationType,
+    this.createdAt,
+    this.senderName,
+    this.senderId,
+    this.clientType,
+    this.msgType,
+    this.conversationName,
     this.conversationId,
     this.messageId,
-    this.senderId,
-    this.senderName,
+    this.event,
+    this.timestamp,
+    this.type,
+    this.imageUrl,
     this.content,
     this.time,
     this.isRead = false,
@@ -57,26 +75,28 @@ class NotificationEvent {
     return NotificationEvent();
   }
 
-  static int _toInt(dynamic val) {
-    if (val == null) return 0;
-    if (val is int) return val;
-    if (val is double) return val.toInt();
-    if (val is String) return int.tryParse(val) ?? 0;
-    return 0;
-  }
-
   static String? _toString(dynamic val) {
     if (val == null) return null;
-    return val.toString();
+    final str = val.toString().trim();
+    if (str.isEmpty) return null;
+    if (str.toLowerCase() == 'hiringbell') return 'Confeet';
+    if (str.toLowerCase().contains('hiringbell')) {
+      return str.replaceAll(RegExp(r'hiringbell', caseSensitive: false), 'Confeet');
+    }
+    return str;
   }
 
   static DateTime? _parseTime(dynamic val) {
     if (val == null) return null;
-    final ms = int.tryParse(val.toString());
+    if (val is DateTime) return val;
+    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+    final str = val.toString().trim();
+    if (str.isEmpty) return null;
+    final ms = int.tryParse(str);
     if (ms != null) {
       return DateTime.fromMillisecondsSinceEpoch(ms);
     }
-    return null;
+    return DateTime.tryParse(str);
   }
 
   static Map<String, dynamic> _parsePayloadString(String payload) {
@@ -96,12 +116,19 @@ class NotificationEvent {
     }
 
     final keys = [
-      'type',
-      'imageUrl',
+      'conversationType',
+      'createdAt',
+      'senderName',
+      'senderId',
+      'clientType',
+      'msgType',
+      'conversationName',
       'conversationId',
       'messageId',
-      'senderId',
-      'senderName',
+      'event',
+      'timestamp',
+      'type',
+      'imageUrl',
       'content',
       'time',
       'isRead',
@@ -122,8 +149,12 @@ class NotificationEvent {
 
     for (int i = 0; i < positions.length; i++) {
       final currentKey = positions[i].key;
-      final startIdx = positions[i].value + currentKey.length + 2;
-      final endIdx = (i + 1 < positions.length) ? positions[i + 1].value : clean.length;
+      final matchPrefix = clean.indexOf('$currentKey: ', positions[i].value) != -1
+          ? '$currentKey: '
+          : '$currentKey:';
+      final startIdx = positions[i].value + matchPrefix.length;
+      final endIdx =
+          (i + 1 < positions.length) ? positions[i + 1].value : clean.length;
 
       String val = clean.substring(startIdx, endIdx).trim();
       if (val.endsWith(',')) {
@@ -148,30 +179,121 @@ class NotificationEvent {
       return NotificationEvent.noArgs();
     }
 
+    final evt = _toString(jsonMap['event']);
+
     return NotificationEvent(
-      type: _toString(jsonMap['type']),
-      imageUrl: _toString(jsonMap['imageUrl']),
-      conversationId: _toString(jsonMap['conversationId']),
-      messageId: _toString(jsonMap['messageId']),
-      senderId: _toString(jsonMap['senderId']),
-      senderName: _toString(jsonMap['fullName']),
-      content: _toString(jsonMap['deviceId']),
-      time: _parseTime(jsonMap['time']),
+      conversationType: _toString(
+        jsonMap['conversationType'] ?? jsonMap['conversation_type'],
+      ),
+      createdAt: _toString(
+        jsonMap['createdAt'] ?? jsonMap['created_at'],
+      ),
+      senderName: _toString(
+        jsonMap['senderName'] ??
+            jsonMap['sender_name'] ??
+            jsonMap['fullName'] ??
+            jsonMap['name'],
+      ),
+      senderId: _toString(
+        jsonMap['senderId'] ?? jsonMap['sender_id'],
+      ),
+      clientType: _toString(
+        jsonMap['clientType'] ?? jsonMap['client_type'],
+      ),
+      msgType: _toString(
+        jsonMap['msgType'] ?? jsonMap['msg_type'],
+      ),
+      conversationName: _toString(
+        jsonMap['conversationName'] ?? jsonMap['conversation_name'],
+      ),
+      conversationId: _toString(
+        jsonMap['conversationId'] ?? jsonMap['conversation_id'],
+      ),
+      messageId: _toString(
+        jsonMap['messageId'] ?? jsonMap['message_id'],
+      ),
+      event: evt,
+      timestamp: _toString(jsonMap['timestamp']),
+      type: _toString(
+        jsonMap['type'] ?? jsonMap['eventType'] ?? evt,
+      ),
+      imageUrl: _toString(
+        jsonMap['imageUrl'] ??
+            jsonMap['image_url'] ??
+            jsonMap['image'] ??
+            jsonMap['avatar'] ??
+            jsonMap['fileUrl'],
+      ),
+      content: _toString(
+        jsonMap['content'] ??
+            jsonMap['body'] ??
+            jsonMap['description'] ??
+            jsonMap['text'] ??
+            jsonMap['message'],
+      ),
+      time: _parseTime(
+        jsonMap['time'] ?? jsonMap['timestamp'] ?? jsonMap['createdAt'],
+      ),
       isRead: jsonMap['isRead'] == true || jsonMap['isRead'] == 'true',
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'type': type,
-      'imageUrl': imageUrl,
+      'conversationType': conversationType,
+      'createdAt': createdAt,
+      'senderName': senderName,
+      'senderId': senderId,
+      'clientType': clientType,
+      'msgType': msgType,
+      'conversationName': conversationName,
       'conversationId': conversationId,
       'messageId': messageId,
-      'senderId': senderId,
-      'senderName': senderName,
+      'event': event,
+      'timestamp': timestamp,
+      'type': type,
+      'imageUrl': imageUrl,
       'content': content,
       'time': time?.millisecondsSinceEpoch.toString(),
       'isRead': isRead,
     };
+  }
+
+  NotificationEvent copyWith({
+    String? conversationType,
+    String? createdAt,
+    String? senderName,
+    String? senderId,
+    String? clientType,
+    String? msgType,
+    String? conversationName,
+    String? conversationId,
+    String? messageId,
+    String? event,
+    String? timestamp,
+    String? type,
+    String? imageUrl,
+    String? content,
+    DateTime? time,
+    bool? isRead,
+  }) {
+    return NotificationEvent(
+      conversationType: conversationType ?? this.conversationType,
+      createdAt: createdAt ?? this.createdAt,
+      senderName: senderName ?? this.senderName,
+      senderId: senderId ?? this.senderId,
+      clientType: clientType ?? this.clientType,
+      msgType: msgType ?? this.msgType,
+      conversationName: conversationName ?? this.conversationName,
+      conversationId: conversationId ?? this.conversationId,
+      messageId: messageId ?? this.messageId,
+      event: event ?? this.event,
+      timestamp: timestamp ?? this.timestamp,
+      type: type ?? this.type,
+      imageUrl: imageUrl ?? this.imageUrl,
+      content: content ?? this.content,
+      time: time ?? this.time,
+      isRead: isRead ?? this.isRead,
+    );
   }
 }
